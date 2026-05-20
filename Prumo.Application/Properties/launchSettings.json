@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "Plantonize.Plantao.Application": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
