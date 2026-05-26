@@ -18,18 +18,10 @@ namespace Prumo.Domain.Entities
         public Guid OwnerId { get; set; }
         public User Owner { get; set; }
 
-        public decimal ValueScore { get; set; } = 0;
-        public decimal EffortScore { get; set; } = 0;
-        public decimal RiskScore { get; set; } = 0;
-        public decimal AlignmentScore { get; set; } = 0;
-
-        public decimal PriorityScore { get; set; } = 0;
-
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
 
         // Optional navigations
         public ICollection<ProjectObjective> ProjectObjectives { get; set; } = new List<ProjectObjective>();
-        public ICollection<ProjectMetric> ProjectMetrics { get; set; } = new List<ProjectMetric>();
+        public ICollection<ProjectEvaluation> ProjectEvaluations { get; set; } = new List<ProjectEvaluation>();
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
         public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
     }

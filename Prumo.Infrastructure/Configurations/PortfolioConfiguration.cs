@@ -29,9 +29,6 @@ namespace Prumo.Infrastructure.Configurations
                 .HasColumnType("uuid")
                 .IsRequired();
 
-            builder.Property(p => p.CreatedAt)
-                .IsRequired();
-
             builder.HasIndex(p => p.OwnerId);
 
             builder.HasOne(p => p.Owner)

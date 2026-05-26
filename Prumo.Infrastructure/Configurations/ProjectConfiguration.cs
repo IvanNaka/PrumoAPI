@@ -27,15 +27,6 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(p => p.Description).HasMaxLength(2000).IsRequired(false);
             builder.Property(p => p.Status).HasConversion<string>().IsRequired();
 
-            builder.Property(p => p.ValueScore).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(p => p.EffortScore).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(p => p.RiskScore).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(p => p.AlignmentScore).HasColumnType("decimal(18,2)").IsRequired();
-
-            builder.Property(p => p.PriorityScore).HasColumnType("decimal(18,2)").IsRequired();
-
-            builder.Property(p => p.CreatedAt).IsRequired();
-
             builder.HasIndex(p => p.PortfolioId);
             builder.HasIndex(p => p.OwnerId);
 

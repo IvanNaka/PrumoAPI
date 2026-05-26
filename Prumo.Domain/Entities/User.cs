@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Prumo.Domain.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace Prumo.Domain.Entities

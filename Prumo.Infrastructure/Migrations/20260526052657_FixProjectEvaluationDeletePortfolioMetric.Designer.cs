@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Plantonize.Plantao.Infrastructure;
@@ -11,9 +12,11 @@ using Plantonize.Plantao.Infrastructure;
 namespace Prumo.Infrastructure.Migrations
 {
     [DbContext(typeof(PrumoDbContext))]
-    partial class PrumoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260526052657_FixProjectEvaluationDeletePortfolioMetric")]
+    partial class FixProjectEvaluationDeletePortfolioMetric
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

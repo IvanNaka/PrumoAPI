@@ -13,9 +13,8 @@ namespace Prumo.Domain.Entities
         public Guid OwnerId { get; set; }
         public User Owner { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.Now;
-
         public ICollection<Project> Projects { get; set; } = new List<Project>();
         public ICollection<Team> Teams { get; set; } = new List<Team>();
+        public ICollection<PriorityCriteria> PriorityCriterias { get; set; } = new List<PriorityCriteria>();
     }
 }

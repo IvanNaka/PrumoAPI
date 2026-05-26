@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Plantonize.Plantao.Infrastructure;
@@ -11,9 +12,11 @@ using Plantonize.Plantao.Infrastructure;
 namespace Prumo.Infrastructure.Migrations
 {
     [DbContext(typeof(PrumoDbContext))]
-    partial class PrumoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260522052827_PortfolioAndCriteriasChanges")]
+    partial class PortfolioAndCriteriasChanges
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -210,6 +213,9 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -235,6 +241,41 @@ namespace Prumo.Infrastructure.Migrations
                     b.ToTable("Portfolios", (string)null);
                 });
 
+            modelBuilder.Entity("Prumo.Domain.Entities.PortfolioMetric", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid?>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<decimal>("ValueWeight")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("PortfolioMetrics", (string)null);
+                });
+
             modelBuilder.Entity("Prumo.Domain.Entities.PriorityCriteria", b =>
                 {
                     b.Property<Guid>("Id")
@@ -248,10 +289,13 @@ namespace Prumo.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
 
                     b.Property<Guid>("PortfolioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("PortfolioId1")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -261,11 +305,13 @@ namespace Prumo.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("ValueWeight")
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("PortfolioId");
+
+                    b.HasIndex("PortfolioId1");
 
                     b.HasIndex("UserId");
 
@@ -321,13 +367,13 @@ namespace Prumo.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<bool>("Active")
+                    b.Property<bool?>("Active")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("PriorityCriteriaId")
+                    b.Property<Guid>("PortfolioMetricId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("ProjectId")
@@ -344,13 +390,13 @@ namespace Prumo.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PriorityCriteriaId");
+                    b.HasIndex("PortfolioMetricId");
 
                     b.HasIndex("ProjectId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProjectEvaluation", (string)null);
+                    b.ToTable("ProjectEvaluation");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.ProjectMember", b =>
@@ -417,9 +463,8 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Name")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -549,12 +594,25 @@ namespace Prumo.Infrastructure.Migrations
                     b.Navigation("Owner");
                 });
 
+            modelBuilder.Entity("Prumo.Domain.Entities.PortfolioMetric", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Project", null)
+                        .WithMany("PortfolioMetrics")
+                        .HasForeignKey("ProjectId");
+                });
+
             modelBuilder.Entity("Prumo.Domain.Entities.PriorityCriteria", b =>
                 {
-                    b.HasOne("Prumo.Domain.Entities.Portfolio", "Portfolio")
+                    b.HasOne("Prumo.Domain.Entities.Portfolio", null)
                         .WithMany("PriorityCriterias")
                         .HasForeignKey("PortfolioId")
                         .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Prumo.Domain.Entities.Portfolio", "Portfolio")
+                        .WithMany()
+                        .HasForeignKey("PortfolioId1")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Prumo.Domain.Entities.User", "User")
@@ -589,9 +647,9 @@ namespace Prumo.Infrastructure.Migrations
 
             modelBuilder.Entity("Prumo.Domain.Entities.ProjectEvaluation", b =>
                 {
-                    b.HasOne("Prumo.Domain.Entities.PriorityCriteria", "PriorityCriteria")
+                    b.HasOne("Prumo.Domain.Entities.PortfolioMetric", "PortfolioMetric")
                         .WithMany()
-                        .HasForeignKey("PriorityCriteriaId")
+                        .HasForeignKey("PortfolioMetricId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -605,7 +663,7 @@ namespace Prumo.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("PriorityCriteria");
+                    b.Navigation("PortfolioMetric");
 
                     b.Navigation("User");
                 });
@@ -698,6 +756,8 @@ namespace Prumo.Infrastructure.Migrations
             modelBuilder.Entity("Prumo.Domain.Entities.Project", b =>
                 {
                     b.Navigation("Alerts");
+
+                    b.Navigation("PortfolioMetrics");
 
                     b.Navigation("ProjectEvaluations");
 
