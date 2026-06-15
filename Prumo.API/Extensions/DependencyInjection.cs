@@ -19,6 +19,7 @@ namespace Prumo.API.Extensions
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IProjectEvaluationRepository, ProjectEvaluationRepository>();
+            services.AddScoped<IProjectDependencyRepository, ProjectDependencyRepository>();
 
 
             // Register Services
@@ -27,6 +28,7 @@ namespace Prumo.API.Extensions
             services.AddScoped<IPriorityCriteriaService, PriorityCriteriaService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProjectEvaluationService, ProjectEvaluationService>();
+            services.AddScoped<IProjectDependencyService, ProjectDependencyService>();
 
             // Generic repository registration
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

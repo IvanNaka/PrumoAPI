@@ -1,10 +1,13 @@
-using Prumo.Application.DTOs.ProjectEvaluation;
+﻿using Prumo.Application.DTOs.ProjectEvaluation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 namespace Prumo.Application.DTOs.Project
 {
-    public class ProjectDto
+    public class GetProjectDetailsDTO
     {
         public Guid Id { get; set; }
         public Guid PortfolioId { get; set; }

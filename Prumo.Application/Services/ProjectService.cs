@@ -94,15 +94,18 @@ namespace Prumo.Application.Services
             {
                 Id = project.Id,
                 PortfolioId = project.PortfolioId,
+                PortfolioName = project.Portfolio?.Name ,
                 Name = project.Name,
                 Description = project.Description,
                 Status = project.Status.ToString(),
                 OwnerId = project.OwnerId,
+                OwnerName = project.Owner?.Name,
                 CreatedDate = project.CreatedDate,
                 ProjectEvaluations = project.ProjectEvaluations?.Select(pe => new Prumo.Application.DTOs.ProjectEvaluation.ProjectEvaluationDto
                 {
                     Id = pe.Id,
                     PriorityCriteriaId = pe.PriorityCriteriaId,
+                    PriorityCriteriaName = pe.PriorityCriteria?.Name,
                     UserId = pe.UserId,
                     Value = pe.Value
                 }).ToList()

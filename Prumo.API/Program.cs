@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Hosting;
+using DotNetEnv; // This will work after installing the package
 
 namespace Prumo.API
 {
@@ -6,6 +7,7 @@ namespace Prumo.API
     {
         public static void Main(string[] args)
         {
+            Env.Load(); 
             CreateHostBuilder(args).Build().Run();
         }
 

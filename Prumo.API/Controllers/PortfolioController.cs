@@ -60,6 +60,7 @@ namespace Prumo.API.Controllers
             {
                 return Unauthorized("User id claim is missing or invalid.");
             }
+            createDto.OwnerId = userIdGuid;
             var createdPortfolio = await _portfolioService.CreateAsync(createDto);
 
             return CreatedAtAction(nameof(GetById), new { id = createdPortfolio.Id }, createdPortfolio);

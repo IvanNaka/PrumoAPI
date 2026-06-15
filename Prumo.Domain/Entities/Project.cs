@@ -24,5 +24,7 @@ namespace Prumo.Domain.Entities
         public ICollection<ProjectEvaluation> ProjectEvaluations { get; set; } = new List<ProjectEvaluation>();
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
         public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
+        public ICollection<ProjectDependency> Dependencies { get; set; } = new List<ProjectDependency>();
+        public ICollection<ProjectDependency> DependentProjects { get; set; } = new List<ProjectDependency>();
     }
 }
