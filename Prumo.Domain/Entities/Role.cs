@@ -10,7 +10,7 @@ namespace Prumo.Domain.Entities
     public class Role : BaseEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
-        public RoleName Name { get; set; }
+        public string Name { get; set; }
         public ICollection<User> Users { get; set; } = new List<User>();
     }
 }

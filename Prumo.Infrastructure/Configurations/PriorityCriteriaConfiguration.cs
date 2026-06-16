@@ -12,15 +12,43 @@ namespace Prumo.Infrastructure.Configurations
 
             builder.ToTable("PriorityCriteria");
 
-            builder.HasKey(p => p.Id);
-            builder.Property(p => p.Id).HasColumnType("uuid").ValueGeneratedOnAdd();
+            builder.HasKey(pc => pc.Id);
+            builder.Property(pc => pc.Id)
+                .HasColumnType("uuid")
+                .ValueGeneratedOnAdd();
 
-            builder.Property(p => p.ValueWeight).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(p => p.EffortWeight).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(p => p.RiskWeight).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(p => p.AlignmentWeight).HasColumnType("decimal(18,2)").IsRequired();
+            builder.Property(pc => pc.Name)
+                .HasMaxLength(200)
+                .IsRequired(false);
 
-            builder.Property(p => p.UpdatedAt).IsRequired();
+            builder.Property(pc => pc.ValueWeight)
+                .HasColumnType("numeric(18,2)")
+                .IsRequired();
+
+            builder.Property(pc => pc.PortfolioId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            builder.Property(pc => pc.UserId)
+                .HasColumnType("uuid")
+                .IsRequired();
+
+            builder.HasIndex(pc => pc.PortfolioId);
+            builder.HasIndex(pc => pc.UserId);
+
+            // EXPLICIT: single relationship mapped to PortfolioId
+            builder.HasOne(pc => pc.Portfolio)
+                   .WithMany(p => p.PriorityCriterias)
+                   .HasForeignKey(pc => pc.PortfolioId)
+                   .OnDelete(DeleteBehavior.NoAction)
+                   .IsRequired();
+
+            // User relationship
+            builder.HasOne(pc => pc.User)
+                   .WithMany()
+                   .HasForeignKey(pc => pc.UserId)
+                   .OnDelete(DeleteBehavior.Cascade)
+                   .IsRequired();
         }
     }
 }

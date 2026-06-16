@@ -1,7 +1,12 @@
-﻿using Microsoft.AspNetCore.HttpLogging;
+﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Plantonize.Plantao.Infrastructure;
+using Prumo.API.Extensions;
 
 
 namespace Prumo.API
@@ -29,7 +34,7 @@ namespace Prumo.API
                 httpLogging.ResponseBodyLogLimit = BODY_LOG_LIMIT;
             });
 
-
+            services.AddApplicationDependencies();
 
             services.AddAuthorization();
 
@@ -39,28 +44,47 @@ namespace Prumo.API
             services.AddControllers();
             services.AddHealthChecks();
             services.AddHttpContextAccessor();
-            
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()    // Allows any origin (e.g., http://localhost:3000)
+                          .AllowAnyMethod()    // Allows any HTTP method (GET, POST, PUT, DELETE, etc.)
+                          .AllowAnyHeader();   // Allows any headers
+                });
+            });
+            var jwtKey = Configuration["Jwt:Key"];
+            var jwtIssuer = Configuration["Jwt:Issuer"];
+            var jwtAudience = Configuration["Jwt:Audience"];
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddCookie("Cookies")
+            .AddGoogle("Google", options =>
+            {
+                options.ClientId = Configuration["Authentication:Google:ClientId"];
+                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
+            })
+            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
+                    ValidIssuer = jwtIssuer,
+                    ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
+                    ValidAudience = jwtAudience,
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                    ValidateLifetime = true
+                };
+            });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "FleetManager API", Version = "v1" });
-                c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
-                {
-                    Type = SecuritySchemeType.OAuth2,
-                    Flows = new OpenApiOAuthFlows
-                    {
-                        Implicit = new OpenApiOAuthFlow
-                        {
-                            AuthorizationUrl = new Uri("https://login.microsoftonline.com/5f3d3de5-5d5f-45b9-bccf-6b8d5aea1a03/oauth2/v2.0/authorize"),
-                            Scopes = new Dictionary<string, string>
-                            {
-                                { "openid", "OpenID Connect scope" },
-                                { "profile", "Profile scope" },
-                                { $"{Configuration["AzureAd:ClientId"]}/.default", "Access FleetManager API" }
-                            }
-                        }
-                    }
-                });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Prumo API", Version = "v1" });
             });
         }
 
@@ -78,7 +102,8 @@ namespace Prumo.API
 
             app.UseAuthentication();
             app.UseAuthorization();
-            
+            app.UseCors("AllowAll");
+
             app.UseHealthChecks("/");
             app.UseSwaggerUI(c =>
             {
