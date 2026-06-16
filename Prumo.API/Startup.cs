@@ -23,6 +23,7 @@ namespace Prumo.API
 
         public void ConfigureServices(IServiceCollection services)
         {
+            DotNetEnv.Env.Load();
             services.AddHttpLogging(httpLogging =>
             {
                 httpLogging.LoggingFields = HttpLoggingFields.All;
