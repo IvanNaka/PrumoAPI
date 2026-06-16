@@ -16,14 +16,17 @@ namespace Prumo.API
         private const int BODY_LOG_LIMIT = 4096;
         public Startup(IConfiguration configuration)
         {
-            Configuration = configuration;
+            DotNetEnv.Env.Load();
+            Configuration = new ConfigurationBuilder()
+                .AddConfiguration(configuration)
+                .AddEnvironmentVariables() 
+                .Build();
         }
 
         public IConfiguration Configuration { get; }
 
         public void ConfigureServices(IServiceCollection services)
         {
-            DotNetEnv.Env.Load();
             services.AddHttpLogging(httpLogging =>
             {
                 httpLogging.LoggingFields = HttpLoggingFields.All;
