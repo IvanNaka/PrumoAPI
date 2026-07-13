@@ -54,7 +54,8 @@ namespace Prumo.Application.Services
                 Id = entity.Id,
                 PriorityCriteriaId = entity.PriorityCriteriaId,
                 UserId = entity.UserId,
-                Value = entity.Value
+                Value = entity.Value,
+                Weight = entity.PriorityCriteria.ValueWeight
             };
         }
     }

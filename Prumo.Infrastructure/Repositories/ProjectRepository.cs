@@ -24,6 +24,8 @@ namespace Plantonize.Plantao.Infrastructure.Repositories
             return await _dbSet
                 .Where(p => p.OwnerId == ownerId)
                 .Include(p => p.ProjectEvaluations)
+                    .ThenInclude(pe => pe.PriorityCriteria)
+                        //.ThenInclude(pc => pc.ValueWeight)
                 .Include(p => p.Owner)
                 .Include(p => p.Portfolio)
                 .ToListAsync();

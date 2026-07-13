@@ -107,7 +107,8 @@ namespace Prumo.Application.Services
                     PriorityCriteriaId = pe.PriorityCriteriaId,
                     PriorityCriteriaName = pe.PriorityCriteria?.Name,
                     UserId = pe.UserId,
-                    Value = pe.Value
+                    Value = pe.Value,
+                    Weight = pe.PriorityCriteria.ValueWeight
                 }).ToList()
             };
         }

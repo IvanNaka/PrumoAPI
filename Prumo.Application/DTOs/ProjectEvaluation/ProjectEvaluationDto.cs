@@ -9,5 +9,6 @@ namespace Prumo.Application.DTOs.ProjectEvaluation
         public string? PriorityCriteriaName { get; set; }
         public Guid UserId { get; set; }
         public decimal Value { get; set; }
+        public decimal Weight { get; set; }
     }
 }
