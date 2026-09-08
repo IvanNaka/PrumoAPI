@@ -10,6 +10,7 @@ namespace Prumo.Domain.Enums
     {
         Jira,
         AzureDevOps,
-        GitHub
+        GitHub,
+        Trello
     }
 }

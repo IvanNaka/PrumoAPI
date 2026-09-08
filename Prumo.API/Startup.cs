@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using System.Text.Json.Serialization;
 
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +46,13 @@ namespace Prumo.API
             services.AddDbContext<PrumoDbContext>(options =>
                     options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // Allow enums to be sent/received as strings (e.g. "Jira") instead of only
+                    // numeric indices, which is what the front-end sends.
+                    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                });
             services.AddHealthChecks();
             services.AddHttpContextAccessor();
             services.AddCors(options =>
@@ -61,18 +68,46 @@ namespace Prumo.API
             var jwtIssuer = Configuration["Jwt:Issuer"];
             var jwtAudience = Configuration["Jwt:Audience"];
 
-            services.AddAuthentication(options =>
+            if (string.IsNullOrWhiteSpace(jwtKey))
+            {
+                // Fail fast with a clear message at startup. Without this guard, an empty
+                // Jwt:Key reaches SymmetricSecurityKey lazily (the first time JwtBearerOptions
+                // are resolved, i.e. on the first incoming request) and throws an obscure
+                // ArgumentException that surfaces as a generic 500 on every request, including
+                // CORS preflights - which the browser then reports as a CORS/network error.
+                throw new InvalidOperationException(
+                    "Configuração ausente: 'Jwt:Key' não foi definido. Configure-o em appsettings, " +
+                    "variável de ambiente (Jwt__Key) ou no arquivo .env antes de iniciar a API.");
+            }
+
+            var authenticationBuilder = services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
                 options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
             })
-            .AddCookie("Cookies")
-            .AddGoogle("Google", options =>
+            .AddCookie("Cookies");
+
+            var googleClientId = Configuration["Authentication:Google:ClientId"];
+            var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
+
+            // The actual Google login flow (POST /api/auth/google) validates the ID token
+            // directly via Google.Apis.Auth using only Authentication:Google:ClientId - it does
+            // NOT depend on this ASP.NET Core OAuth handler (used only for server-side redirect
+            // challenges, which this API doesn't perform). Registering it anyway with a missing
+            // ClientSecret would fail GoogleOptions validation on every request (any scheme that
+            // implements IAuthenticationRequestHandler is initialized by the authentication
+            // middleware to check its callback path), crashing the whole API. So only register
+            // it when both values are actually configured.
+            if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
             {
-                options.ClientId = Configuration["Authentication:Google:ClientId"];
-                options.ClientSecret = Configuration["Authentication:Google:ClientSecret"];
-            })
-            .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
+                authenticationBuilder.AddGoogle("Google", options =>
+                {
+                    options.ClientId = googleClientId;
+                    options.ClientSecret = googleClientSecret;
+                });
+            }
+
+            authenticationBuilder.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -104,9 +139,11 @@ namespace Prumo.API
                 app.UseSwaggerUI();
             }
 
+            app.UseCors("AllowAll");
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseCors("AllowAll");
+
+            RoleSeeder.SeedRolesAsync(app.ApplicationServices).GetAwaiter().GetResult();
 
             app.UseHealthChecks("/");
             app.UseSwaggerUI(c =>

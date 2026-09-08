@@ -40,11 +40,11 @@ namespace Prumo.Application.Services
             var user = await _userRepository.GetByEmailAsync(email);
             if (user == null)
             {
-                // Ensure a default role exists (Viewer)
-                var role = await _roleRepository.GetByNameAsync(RoleName.Viewer.ToString());
+                // Ensure a default role exists (lowest-privilege role: DEV)
+                var role = await _roleRepository.GetByNameAsync(RoleName.DEV.ToString());
                 if (role == null)
                 {
-                    role = new Role { Name = RoleName.Viewer.ToString() };
+                    role = new Role { Name = RoleName.DEV.ToString() };
                     await _roleRepository.AddAsync(role);
                 }
 
@@ -57,6 +57,9 @@ namespace Prumo.Application.Services
 
                 user = await _userRepository.AddAsync(user);
             }
+
+            // Reload with Role navigation populated so the role claim is always present in the JWT
+            user = await _userRepository.GetByIdWithRoleAsync(user.Id) ?? user;
 
             // Generate JWT
             return GenerateJwtToken(user);

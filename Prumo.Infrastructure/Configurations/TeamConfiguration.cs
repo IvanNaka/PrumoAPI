@@ -18,6 +18,9 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(t => t.Name).HasMaxLength(200).IsRequired();
             builder.Property(t => t.OwnerUserId).HasColumnType("uuid").IsRequired(false);
 
+            builder.Property(t => t.InviteCode).HasMaxLength(12).IsRequired();
+            builder.HasIndex(t => t.InviteCode).IsUnique();
+
             builder.HasOne(t => t.OwnerUser)
                 .WithMany()
                 .HasForeignKey(t => t.OwnerUserId)

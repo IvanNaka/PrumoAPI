@@ -9,8 +9,12 @@ namespace Prumo.Domain.Enums
     public enum RoleName
     {
         Admin,
-        Strategic,
-        Contributor,
-        Viewer
+        PO,
+        Gerente,
+        Diretoria,
+        TechLead,
+        ScrumMaster,
+        QA,
+        DEV
     }
 }

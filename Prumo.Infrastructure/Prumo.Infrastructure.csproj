@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Prumo.Domain\Prumo.Domain.csproj" />
+    <ProjectReference Include="..\Prumo.Application\Prumo.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,8 +23,8 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.16" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.16" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.8" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
   </ItemGroup>
 

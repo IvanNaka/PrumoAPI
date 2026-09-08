@@ -19,6 +19,9 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(i => i.ApiUrl).HasMaxLength(1000).IsRequired();
             builder.Property(i => i.Token).HasMaxLength(1000).IsRequired(false);
             builder.Property(i => i.IsActive).IsRequired();
+            builder.Property(i => i.SyncIntervalMinutes).IsRequired().HasDefaultValue(60);
+            builder.Property(i => i.LastSyncedAt).IsRequired(false);
+            builder.Property(i => i.LastSyncStatus).HasMaxLength(100).IsRequired(false);
         }
     }
 }

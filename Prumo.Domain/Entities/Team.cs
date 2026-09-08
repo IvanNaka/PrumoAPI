@@ -12,6 +12,12 @@ namespace Prumo.Domain.Entities
 
         public string Name { get; set; } = string.Empty;
 
+        /// <summary>
+        /// Short, unique, human-shareable code used by other users to join this team
+        /// via <c>POST /api/teams/join</c> without needing an explicit invite from the owner.
+        /// </summary>
+        public string InviteCode { get; set; } = string.Empty;
+
         public Guid? OwnerUserId { get; set; }
         public User OwnerUser { get; set; }
 

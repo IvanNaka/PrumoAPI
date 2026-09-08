@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Google.Apis.Auth;
+using Microsoft.AspNetCore.Mvc;
 using Prumo.Application.DTOs.Auth;
 using Prumo.Application.Interfaces;
 
@@ -20,8 +21,16 @@ namespace Prumo.API.Controllers
             if (dto == null || string.IsNullOrWhiteSpace(dto.IdToken))
                 return BadRequest("idToken is required.");
 
-            var jwt = await _authService.SignInWithGoogleAsync(dto.IdToken);
-            return Ok(new { token = jwt });
+            try
+            {
+                var jwt = await _authService.SignInWithGoogleAsync(dto.IdToken);
+                return Ok(new { token = jwt });
+            }
+            catch (InvalidJwtException)
+            {
+                // Malformed or invalid Google ID token (bad signature, wrong audience, expired, etc.)
+                return Unauthorized(new { message = "Token do Google inválido ou expirado." });
+            }
         }
     }
 }

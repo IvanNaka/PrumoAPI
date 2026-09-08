@@ -16,5 +16,17 @@ namespace Prumo.Domain.Entities
         public string Token { get; set; } = string.Empty;
 
         public bool IsActive { get; set; } = true;
+
+        /// <summary>
+        /// Sync period in minutes for the automatic synchronization routine (RF51).
+        /// </summary>
+        public int SyncIntervalMinutes { get; set; } = 60;
+
+        public DateTime? LastSyncedAt { get; set; }
+
+        /// <summary>
+        /// Outcome of the last sync attempt (e.g. "Success", "Unavailable", "AuthenticationFailed").
+        /// </summary>
+        public string LastSyncStatus { get; set; }
     }
 }
