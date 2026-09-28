@@ -17,5 +17,6 @@ namespace Prumo.Domain.Entities
         public ICollection<Team> Teams { get; set; } = new List<Team>();
         public ICollection<PriorityCriteria> PriorityCriterias { get; set; } = new List<PriorityCriteria>();
         public ICollection<ProjectDependency> ProjectDependencies { get; set; } = new List<ProjectDependency>();
+        public ICollection<RoadmapItem> RoadmapItems { get; set; } = new List<RoadmapItem>();
     }
 }

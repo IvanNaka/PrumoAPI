@@ -22,5 +22,6 @@ namespace Prumo.Domain.Entities
         public User OwnerUser { get; set; }
 
         public ICollection<TeamUser> Members { get; set; } = new List<TeamUser>();
+        public ICollection<TeamCapacityEntry> CapacityEntries { get; set; } = new List<TeamCapacityEntry>();
     }
 }
