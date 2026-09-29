@@ -60,8 +60,18 @@ namespace Prumo.API.Extensions
             services.AddScoped<IIntegrationSyncService, IntegrationSyncService>();
             services.AddSingleton<Prumo.API.BackgroundServices.SyncTrigger>();
             services.AddSingleton<ISyncTrigger>(sp => sp.GetRequiredService<Prumo.API.BackgroundServices.SyncTrigger>());
-            services.AddSingleton<IAdminNotifier, Prumo.API.BackgroundServices.LoggingAdminNotifier>();
             services.AddHostedService<Prumo.API.BackgroundServices.ScheduledSyncService>();
+
+            // Notificações (RF45, RF46, Figura 30): serviço, regras, fila + dispatcher e job diário.
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<NotificationRulesService>();
+            services.AddScoped<INotificationRulesService>(sp => sp.GetRequiredService<NotificationRulesService>());
+            services.AddScoped<ISyncCompletedHandler>(sp => sp.GetRequiredService<NotificationRulesService>());
+            services.AddScoped<IAdminNotifier, NotificationAdminNotifier>();
+            services.AddSingleton<Prumo.API.BackgroundServices.NotificationQueue>();
+            services.AddSingleton<INotificationQueue>(sp => sp.GetRequiredService<Prumo.API.BackgroundServices.NotificationQueue>());
+            services.AddHostedService<Prumo.API.BackgroundServices.NotificationDispatcher>();
+            services.AddHostedService<Prumo.API.BackgroundServices.DailyNotificationJob>();
 
             // Generic repository registration
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
