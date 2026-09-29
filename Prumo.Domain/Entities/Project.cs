@@ -64,5 +64,6 @@ namespace Prumo.Domain.Entities
         public ICollection<ProjectDependency> Dependencies { get; set; } = new List<ProjectDependency>();
         public ICollection<ProjectDependency> DependentProjects { get; set; } = new List<ProjectDependency>();
         public Budget? Budget { get; set; }
+        public ICollection<BudgetExpense> Expenses { get; set; } = new List<BudgetExpense>();
     }
 }

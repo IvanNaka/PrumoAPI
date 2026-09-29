@@ -1,20 +1,24 @@
-﻿using System;
 using Prumo.Domain.Enums;
 
 namespace Prumo.Domain.Entities
 {
-    // N:1 com Budget (RF23) — custo/despesa individual registrado contra um
-    // orçamento, usado no cálculo de Burn Rate/VPL.
+    // LancamentoFinanceiro (RF23): custo ou despesa registrado no projeto.
     public class BudgetExpense : BaseEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        public Guid BudgetId { get; set; }
-        public Budget Budget { get; set; } = null!;
+        public Guid ProjectId { get; set; }
+        public Project Project { get; set; } = null!;
 
         public string Description { get; set; } = string.Empty;
+
+        /// <summary>Tipo: Custo ou Despesa.</summary>
         public BudgetExpenseCategory Category { get; set; }
+
+        /// <summary>Valor: maior que 0.</summary>
         public decimal Amount { get; set; }
-        public DateTime Date { get; set; }
+
+        /// <summary>DataLancamento: não pode ser no futuro.</summary>
+        public DateOnly Date { get; set; }
     }
 }

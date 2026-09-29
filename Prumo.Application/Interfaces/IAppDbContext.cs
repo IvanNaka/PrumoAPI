@@ -19,6 +19,8 @@ namespace Prumo.Application.Interfaces
         DbSet<Objective> Objectives { get; }
         DbSet<KeyResult> KeyResults { get; }
         DbSet<ProjectObjective> ProjectObjectives { get; }
+        DbSet<Budget> Budgets { get; }
+        DbSet<BudgetExpense> BudgetExpenses { get; }
         DbSet<ProjectEvaluation> ProjectEvaluations { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

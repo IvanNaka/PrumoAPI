@@ -149,6 +149,9 @@ namespace Prumo.Application.Services
             };
             Apply(project, valid);
 
+            // Orcamento 1:1 com o projeto, com o mesmo valor do orçamento aprovado.
+            project.Budget = new Budget { ProjectId = project.Id, TotalAmount = project.ApprovedBudget };
+
             _db.Projects.Add(project);
             await _db.SaveChangesAsync();
 
@@ -161,7 +164,7 @@ namespace Prumo.Application.Services
         public async Task<ProjetoDetalheDto> UpdateAsync(Guid id, SalvarProjetoDto dto)
         {
             await _access.EnsureProjectAccessAsync(id, write: true);
-            var project = await _db.Projects.SingleAsync(p => p.Id == id);
+            var project = await _db.Projects.Include(p => p.Budget).SingleAsync(p => p.Id == id);
 
             // Cancelado e Arquivado são estados finais: nenhuma edição de dados é permitida (RN22).
             if (ProjectStateMachine.EhFinal(project.Status))
@@ -173,6 +176,8 @@ namespace Prumo.Application.Services
             var priorityChanged = project.Priority != valid.Priority;
             Apply(project, valid);
             project.UpdatedDate = DateTime.UtcNow;
+            project.Budget ??= new Budget { ProjectId = project.Id };
+            project.Budget.TotalAmount = project.ApprovedBudget;
             await _db.SaveChangesAsync();
 
             if (priorityChanged)

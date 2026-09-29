@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-
 namespace Prumo.Domain.Entities
 {
-    // 1:1 com Project (RF22) — orçamento aprovado do projeto, usado para
-    // calcular Burn Rate (RF24) e VPL (RF25) a partir dos custos/despesas
-    // registrados (RF23).
+    // Orcamento (Figura 9) — 1:1 com Projeto, com TotalAmount (ValorPlanejado) sempre igual a
+    // Project.ApprovedBudget. O valor consumido e o burn rate NÃO são gravados: são calculados (F5).
     public class Budget : BaseEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
@@ -13,13 +9,8 @@ namespace Prumo.Domain.Entities
         public Guid ProjectId { get; set; }
         public Project Project { get; set; } = null!;
 
+        /// <summary>ValorPlanejado == Project.ApprovedBudget.</summary>
         public decimal TotalAmount { get; set; }
-        public string Currency { get; set; } = string.Empty;
-        public DateTime StartDate { get; set; }
-        public DateTime EndDate { get; set; }
-        public decimal DiscountRateMonthly { get; set; }
-        public decimal ExpectedReturn { get; set; }
-
-        public ICollection<BudgetExpense> Expenses { get; set; } = new List<BudgetExpense>();
+        public string Currency { get; set; } = "BRL";
     }
 }
