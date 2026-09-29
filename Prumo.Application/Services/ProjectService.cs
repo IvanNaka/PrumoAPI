@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Microsoft.EntityFrameworkCore;
 using Prumo.Application.DTOs.Project;
 using Prumo.Application.Interfaces;
 using Prumo.Application.StateMachines;
@@ -16,12 +16,41 @@ namespace Prumo.Application.Services
         private readonly IProjectRepository _projectRepository;
         private readonly IProjectEvaluationRepository _projectEvaluationRepository;
         private readonly IPortfolioService _portfolioService;
+        private readonly IAppDbContext _db;
+        private readonly IPortfolioAccessService _access;
 
-        public ProjectService(IProjectRepository projectRepository, IProjectEvaluationRepository projectEvaluationRepository, IPortfolioService portfolioService)
+        public ProjectService(
+            IProjectRepository projectRepository,
+            IProjectEvaluationRepository projectEvaluationRepository,
+            IPortfolioService portfolioService,
+            IAppDbContext db,
+            IPortfolioAccessService access)
         {
             _projectRepository = projectRepository;
             _projectEvaluationRepository = projectEvaluationRepository;
             _portfolioService = portfolioService;
+            _db = db;
+            _access = access;
+        }
+
+        /// <summary>GET /portfolios/{id}/projetos — exige ser membro do portfólio.</summary>
+        public async Task<IEnumerable<ProjetoResumoDto>> ListByPortfolioAsync(Guid portfolioId)
+        {
+            await _access.EnsureAccessAsync(portfolioId);
+            return await _db.Projects.AsNoTracking()
+                .Where(p => p.PortfolioId == portfolioId)
+                .OrderBy(p => p.Name)
+                .Select(p => new ProjetoResumoDto
+                {
+                    Id = p.Id,
+                    PortfolioId = p.PortfolioId,
+                    Nome = p.Name,
+                    Status = p.Status.ToString(),
+                    ResponsavelId = p.OwnerId,
+                    ResponsavelNome = p.Owner.Name,
+                    DataCriacao = p.CreatedDate,
+                })
+                .ToListAsync();
         }
 
         public async Task<ProjectDto> GetByIdAsync(Guid id)

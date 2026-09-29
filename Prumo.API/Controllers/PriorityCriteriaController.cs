@@ -22,6 +22,12 @@ namespace Prumo.API.Controllers
             _priorityCriteriaService = priorityCriteriaService;
         }
 
+        [HttpGet("/api/portfolios/{portfolioId:guid}/criterios")]
+        public async Task<ActionResult<IEnumerable<Prumo.Application.DTOs.Criteria.CriterioDto>>> ListByPortfolio(Guid portfolioId)
+        {
+            return Ok(await _priorityCriteriaService.ListByPortfolioAsync(portfolioId));
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<PriorityCriteriaDto>> GetById(Guid id)
         {

@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
+using Prumo.Application.DTOs.Criteria;
 using Prumo.Application.DTOs.PriorityCriteria;
 using Prumo.Application.Interfaces;
 using Prumo.Application.StateMachines;
@@ -14,11 +16,30 @@ namespace Prumo.Application.Services
     {
         private readonly IPriorityCriteriaRepository _priorityCriteriaRepository;
         private readonly IPortfolioService _portfolioService;
+        private readonly IAppDbContext _db;
+        private readonly IPortfolioAccessService _access;
 
-        public PriorityCriteriaService(IPriorityCriteriaRepository priorityCriteriaRepository, IPortfolioService portfolioService)
+        public PriorityCriteriaService(
+            IPriorityCriteriaRepository priorityCriteriaRepository,
+            IPortfolioService portfolioService,
+            IAppDbContext db,
+            IPortfolioAccessService access)
         {
             _priorityCriteriaRepository = priorityCriteriaRepository;
             _portfolioService = portfolioService;
+            _db = db;
+            _access = access;
+        }
+
+        /// <summary>GET /portfolios/{id}/criterios — exige ser membro do portfólio.</summary>
+        public async Task<IEnumerable<CriterioDto>> ListByPortfolioAsync(Guid portfolioId)
+        {
+            await _access.EnsureAccessAsync(portfolioId);
+            return await _db.PriorityCriterias.AsNoTracking()
+                .Where(c => c.PortfolioId == portfolioId)
+                .OrderBy(c => c.Name)
+                .Select(c => new CriterioDto { Id = c.Id, PortfolioId = c.PortfolioId, Nome = c.Name, Peso = c.ValueWeight })
+                .ToListAsync();
         }
 
         public async Task<PriorityCriteriaDto> GetByIdAsync(Guid id)

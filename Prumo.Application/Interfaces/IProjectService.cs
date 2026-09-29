@@ -8,6 +8,7 @@ namespace Prumo.Application.Interfaces
 {
     public interface IProjectService
     {
+        Task<IEnumerable<ProjetoResumoDto>> ListByPortfolioAsync(Guid portfolioId);
         Task<ProjectDto> GetByIdAsync(Guid id);
         Task<IEnumerable<ProjectDto>> GetAllAsync();
         Task<IEnumerable<ProjectDto>> GetByPortfolioIdAsync(Guid portfolioId);

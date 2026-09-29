@@ -23,6 +23,12 @@ namespace Prumo.API.Controllers
             _projectService = projectService;
         }
 
+        [HttpGet("/api/portfolios/{portfolioId:guid}/projetos")]
+        public async Task<ActionResult<IEnumerable<ProjetoResumoDto>>> ListByPortfolio(Guid portfolioId)
+        {
+            return Ok(await _projectService.ListByPortfolioAsync(portfolioId));
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<ProjectDto>> GetById(Guid id)
         {

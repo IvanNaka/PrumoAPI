@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using Prumo.Application.DTOs.Criteria;
 using Prumo.Application.DTOs.PriorityCriteria;
 
 namespace Prumo.Application.Interfaces
 {
     public interface IPriorityCriteriaService
     {
+        Task<IEnumerable<CriterioDto>> ListByPortfolioAsync(Guid portfolioId);
         Task<PriorityCriteriaDto> GetByIdAsync(Guid id);
         Task<IEnumerable<PriorityCriteriaDto>> GetAllAsync();
         Task<IEnumerable<PriorityCriteriaDto>> GetByPortfolioIdAsync(Guid portfolioId);
