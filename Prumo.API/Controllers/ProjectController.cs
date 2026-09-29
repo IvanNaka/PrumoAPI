@@ -1,4 +1,6 @@
-﻿using System;
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
@@ -10,6 +12,7 @@ using Prumo.Domain.Entities;
 namespace Prumo.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class ProjectsController : ControllerBase
     {
@@ -50,6 +53,7 @@ namespace Prumo.API.Controllers
             return Ok(projects);
         }
 
+        [Authorize(Policy = Policies.EditarProjetos)]
         [HttpPost]
         public async Task<ActionResult<ProjectDto>> Create([FromBody] CreateProjectDTO project)
         {
@@ -71,6 +75,7 @@ namespace Prumo.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = createdProject.Id }, createdProject);
         }
 
+        [Authorize(Policy = Policies.EditarProjetos)]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] Project project)
         {
@@ -83,6 +88,7 @@ namespace Prumo.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = Policies.EditarProjetos)]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

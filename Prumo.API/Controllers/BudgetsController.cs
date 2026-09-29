@@ -1,4 +1,6 @@
-﻿using System;
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
+using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,7 @@ using Prumo.Application.Interfaces;
 namespace Prumo.API.Controllers
 {
     [ApiController]
+    [Authorize(Policy = Policies.VerFinanceiro)]
     [Route("api/[controller]")]
     public class BudgetsController : ControllerBase
     {
@@ -43,6 +46,7 @@ namespace Prumo.API.Controllers
             return Ok(budget);
         }
 
+        [Authorize(Policy = Policies.EditarFinanceiro)]
         [HttpPost]
         public async Task<ActionResult<BudgetDto>> Create([FromBody] CreateBudgetDto createDto)
         {
@@ -66,6 +70,7 @@ namespace Prumo.API.Controllers
             }
         }
 
+        [Authorize(Policy = Policies.EditarFinanceiro)]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateBudgetDto updateDto)
         {
@@ -102,6 +107,7 @@ namespace Prumo.API.Controllers
             return Ok(expenses);
         }
 
+        [Authorize(Policy = Policies.EditarFinanceiro)]
         [HttpPost("{budgetId:guid}/expenses")]
         public async Task<ActionResult<BudgetExpenseDto>> CreateExpense(Guid budgetId, [FromBody] CreateBudgetExpenseDto createDto)
         {
@@ -125,6 +131,7 @@ namespace Prumo.API.Controllers
             }
         }
 
+        [Authorize(Policy = Policies.EditarFinanceiro)]
         [HttpDelete("expenses/{expenseId:guid}")]
         public async Task<IActionResult> DeleteExpense(Guid expenseId)
         {

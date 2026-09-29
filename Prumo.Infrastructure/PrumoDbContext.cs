@@ -12,6 +12,9 @@ namespace Plantonize.Plantao.Infrastructure
 
         public DbSet<User> Users => Set<User>();
         public DbSet<UserRole> UserRoles => Set<UserRole>();
+        public DbSet<Portfolio> Portfolios => Set<Portfolio>();
+        public DbSet<PortfolioMember> PortfolioMembers => Set<PortfolioMember>();
+        public DbSet<Project> Projects => Set<Project>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

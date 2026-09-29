@@ -30,6 +30,7 @@ namespace Prumo.API.Extensions
             services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<PrumoDbContext>());
             services.AddScoped<ICurrentUserService, Prumo.API.Infrastructure.CurrentUserService>();
             services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
+            services.AddScoped<IPortfolioAccessService, PortfolioAccessService>();
 
             // Register Services
             services.AddScoped<IProjectService, ProjectService>();

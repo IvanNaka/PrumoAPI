@@ -1,3 +1,4 @@
+using Prumo.Domain.Enums;
 using System;
 using System.Collections.Generic;
 
@@ -12,6 +13,12 @@ namespace Prumo.Domain.Entities
 
         public Guid OwnerId { get; set; }
         public User Owner { get; set; }
+
+        /// <summary>Figura 27. Padrão: Criado.</summary>
+        public PortfolioStatus Status { get; set; } = PortfolioStatus.Criado;
+
+        /// <summary>Membros do portfólio (o responsável é incluído automaticamente).</summary>
+        public ICollection<PortfolioMember> Members { get; set; } = new List<PortfolioMember>();
 
         public ICollection<Project> Projects { get; set; } = new List<Project>();
         public ICollection<Team> Teams { get; set; } = new List<Team>();

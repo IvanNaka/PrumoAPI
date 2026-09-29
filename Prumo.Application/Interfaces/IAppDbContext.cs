@@ -11,6 +11,9 @@ namespace Prumo.Application.Interfaces
     {
         DbSet<User> Users { get; }
         DbSet<UserRole> UserRoles { get; }
+        DbSet<Portfolio> Portfolios { get; }
+        DbSet<PortfolioMember> PortfolioMembers { get; }
+        DbSet<Project> Projects { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }

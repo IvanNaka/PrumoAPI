@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prumo.Application.DTOs.Integration;
 using Prumo.Application.Exceptions;
@@ -11,10 +13,9 @@ namespace Prumo.API.Controllers
     /// <summary>
     /// UC15 "Configurar Integração" / UC16 "Sincronizar Dados": endpoints to configure and sync
     /// external tool integrations (Jira, Azure DevOps, GitHub, Trello - RF47/RF48/RF49/RF50).
-    /// NOTE: [Authorize] temporarily removed - all endpoints are open while role
-    /// permissions are disabled. Re-add [Authorize] / role checks when re-enabling.
     /// </summary>
     [ApiController]
+    [Authorize(Policy = Policies.Integracoes)]
     [Route("api/[controller]")]
     public class IntegrationsController : ControllerBase
     {

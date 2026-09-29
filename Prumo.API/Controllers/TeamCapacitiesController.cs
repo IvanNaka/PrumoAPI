@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,6 +10,7 @@ using Prumo.Application.Interfaces;
 namespace Prumo.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class TeamCapacitiesController : ControllerBase
     {
@@ -45,6 +48,7 @@ namespace Prumo.API.Controllers
             return Ok(entries);
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpPost]
         public async Task<ActionResult<TeamCapacityEntryDto>> Create([FromBody] CreateTeamCapacityDto createDto)
         {
@@ -66,6 +70,7 @@ namespace Prumo.API.Controllers
             }
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTeamCapacityDto updateDto)
         {
@@ -89,6 +94,7 @@ namespace Prumo.API.Controllers
             }
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

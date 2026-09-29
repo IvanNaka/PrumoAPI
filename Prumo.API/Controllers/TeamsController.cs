@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prumo.Application.DTOs.Team;
 using Prumo.Application.Interfaces;
@@ -8,9 +10,8 @@ using System.Threading.Tasks;
 
 namespace Prumo.API.Controllers
 {
-    // NOTE: [Authorize] temporarily removed - all endpoints are open while role
-    // permissions are disabled. Re-add [Authorize] / role checks when re-enabling.
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class TeamsController : ControllerBase
     {
@@ -47,6 +48,7 @@ namespace Prumo.API.Controllers
             return Ok(teams);
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpPost]
         public async Task<ActionResult<TeamDto>> Create([FromBody] CreateTeamDto createDto)
         {
@@ -66,6 +68,7 @@ namespace Prumo.API.Controllers
             }
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTeamDto updateDto)
         {
@@ -91,6 +94,7 @@ namespace Prumo.API.Controllers
             }
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
@@ -104,6 +108,7 @@ namespace Prumo.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpPost("{id:guid}/members")]
         public async Task<ActionResult<TeamDto>> AddMember(Guid id, [FromBody] AddTeamMemberDto addMemberDto)
         {
@@ -128,6 +133,7 @@ namespace Prumo.API.Controllers
             }
         }
 
+        [Authorize(Policy = Policies.EditarEquipes)]
         [HttpDelete("{id:guid}/members/{userId:guid}")]
         public async Task<ActionResult<TeamDto>> RemoveMember(Guid id, Guid userId)
         {

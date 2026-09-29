@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -42,7 +44,8 @@ namespace Prumo.API
             services.AddSingleton(Configuration);
             services.AddApplicationDependencies();
 
-            services.AddAuthorization();
+            services.AddAuthorization(Policies.Register);
+            services.AddSingleton<IAuthorizationMiddlewareResultHandler, ProblemAuthorizationResultHandler>();
 
             services.AddDbContext<PrumoDbContext>(options =>
                     options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));

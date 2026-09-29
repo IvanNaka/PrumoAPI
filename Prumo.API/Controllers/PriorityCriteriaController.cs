@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Prumo.Application.DTOs.PriorityCriteria;
 using Prumo.Application.Interfaces;
 using System;
@@ -9,6 +11,7 @@ using System.Threading.Tasks;
 namespace Prumo.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class PriorityCriteriaController : ControllerBase
     {
@@ -52,6 +55,7 @@ namespace Prumo.API.Controllers
             return Ok(criteriaList);
         }
 
+        [Authorize(Policy = Policies.EditarCriterios)]
         [HttpPost]
         public async Task<ActionResult<PriorityCriteriaDto>> Create([FromBody] CreatePriorityCriteriaDto createDto)
         {
@@ -74,6 +78,7 @@ namespace Prumo.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = createdCriteria.Id }, createdCriteria);
         }
 
+        [Authorize(Policy = Policies.EditarCriterios)]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePriorityCriteriaDto updateDto)
         {
@@ -93,6 +98,7 @@ namespace Prumo.API.Controllers
             return NoContent();
         }
 
+        [Authorize(Policy = Policies.EditarCriterios)]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {

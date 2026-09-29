@@ -1,3 +1,4 @@
+using Prumo.API.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prumo.Application.DTOs.User;
@@ -7,7 +8,7 @@ namespace Prumo.API.Controllers
 {
     // RF03 — gestão de usuários.
     [ApiController]
-    [Authorize]
+    [Authorize(Policy = Policies.GerirUsuarios)]
     [Route("api/usuarios")]
     public class UsersController : ControllerBase
     {

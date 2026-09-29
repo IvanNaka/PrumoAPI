@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Prumo.Application.DTOs.ProjectDependency;
@@ -11,6 +13,7 @@ using System.Threading.Tasks;
 namespace Prumo.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class ProjectDependencyController : ControllerBase
     {
@@ -40,6 +43,7 @@ namespace Prumo.API.Controllers
             return Ok(projectDependencies);
         }
 
+        [Authorize(Policy = Policies.EditarDependencias)]
         [HttpPost]
         public async Task<ActionResult<ProjectDependencyDto>> Create([FromBody] CreateProjectDependencyDto createDto)
         {
@@ -59,6 +63,7 @@ namespace Prumo.API.Controllers
             return CreatedAtAction(nameof(GetById), new { id = createdProjectDependency.Id }, createdProjectDependency);
         }
 
+        [Authorize(Policy = Policies.EditarDependencias)]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> Delete(Guid id)
         {
