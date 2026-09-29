@@ -176,7 +176,7 @@ Enums gravados como inteiro no banco: `Alert.Type`, `Integration.Type`. Os demai
 | Tarefa | Status (PENDENTE/EM ANDAMENTO/CONCLUÍDA) | Observações |
 |---|---|---|
 | Fase 0 | CONCLUÍDA | inventário acima |
-| T01 | PENDENTE | |
+| T01 | CONCLUÍDA | 12 enums conforme 3.1, todos gravados como texto (convenção global no DbContext); migration `T01_Enums` converte dados antigos; `enums.ts`/`rotulos.ts` no front; teste `EnumsTests` |
 | T02 | PENDENTE | |
 | T03 | PENDENTE | |
 | T04 | PENDENTE | |
@@ -205,4 +205,5 @@ Enums gravados como inteiro no banco: `Alert.Type`, `Integration.Type`. Os demai
 | T27 | PENDENTE | |
 
 ## Dúvidas em aberto
--
+- **ScrumMaster (T01):** o perfil não existe no documento (D02). Na migration `T01_Enums` os usuários com esse perfil foram migrados para **TechLead** (perfil mais próximo: ambos podiam gerir equipes). Confirmar com a equipe.
+- **Alertas antigos (T01):** a tabela `Alerts` (tipos Warning/Critical/Info) não era alimentada por nenhum código; os registros existentes foram descartados na migration `T01_Enums`.

@@ -7,16 +7,16 @@ namespace Prumo.API.Authorization
     /// </summary>
     public static class RoleGroups
     {
-        public const string Admin = "Admin";
+        public const string Admin = "Administrador";
 
         /// <summary>
         /// Roles allowed to manage teams (create/edit/delete teams and manage members).
         /// </summary>
-        public const string TeamManagement = "Admin,Gerente,Diretoria,TechLead,ScrumMaster";
+        public const string TeamManagement = "Administrador,TechLead";
 
         /// <summary>
         /// Roles allowed to manage user accounts (create/edit/delete users).
         /// </summary>
-        public const string UserManagement = "Admin";
+        public const string UserManagement = "Administrador";
     }
 }

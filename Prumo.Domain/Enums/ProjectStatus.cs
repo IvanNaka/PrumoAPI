@@ -1,16 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Prumo.Domain.Enums
 {
+    // Figura 26 + D04 (inclui Cancelado).
     public enum ProjectStatus
     {
-        Active,
-        Paused,
-        Completed
-
+        Rascunho,
+        Planejado,
+        EmAndamento,
+        EmRisco,
+        Suspenso,
+        Concluido,
+        Cancelado,
+        Arquivado
     }
 }

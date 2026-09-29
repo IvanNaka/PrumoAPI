@@ -115,6 +115,11 @@ namespace Prumo.Infrastructure.Integrations
                     ResolvedAt = GetDate(fields, "resolutiondate"),
                 };
 
+                if (issueDto.Type == null)
+                {
+                    continue;
+                }
+
                 result.Issues.Add(issueDto);
 
                 foreach (var worklog in await GetWorklogsAsync(integration, externalId, cancellationToken))
@@ -246,15 +251,18 @@ namespace Prumo.Infrastructure.Integrations
             return value.GetDouble() / 3600.0;
         }
 
-        private static ExternalIssueType MapIssueType(string jiraTypeName)
+        // Story, Task e Bug -> iguais; Feature -> Feature; Sub-task/Subtarefa -> Task;
+        // Epic e demais tipos -> ignorados (null).
+        private static ExternalIssueType? MapIssueType(string jiraTypeName)
         {
             return jiraTypeName?.Trim().ToLowerInvariant() switch
             {
-                "story" => ExternalIssueType.Story,
-                "task" => ExternalIssueType.Task,
-                "feature" or "epic" => ExternalIssueType.Feature,
+                "story" or "história" or "historia" => ExternalIssueType.Story,
+                "task" or "tarefa" => ExternalIssueType.Task,
+                "sub-task" or "subtask" or "subtarefa" => ExternalIssueType.Task,
+                "feature" or "funcionalidade" => ExternalIssueType.Feature,
                 "bug" => ExternalIssueType.Bug,
-                _ => ExternalIssueType.Other,
+                _ => null,
             };
         }
     }

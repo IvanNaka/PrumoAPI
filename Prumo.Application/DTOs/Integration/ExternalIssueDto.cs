@@ -13,7 +13,7 @@ namespace Prumo.Application.DTOs.Integration
         public string ExternalId { get; set; }
         public string Key { get; set; }
         public string Title { get; set; }
-        public ExternalIssueType Type { get; set; }
+        public ExternalIssueType? Type { get; set; }
         public string Status { get; set; }
         public string ProjectExternalId { get; set; }
         public string AssigneeName { get; set; }

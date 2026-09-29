@@ -41,10 +41,10 @@ namespace Prumo.Application.Services
             if (user == null)
             {
                 // Ensure a default role exists (lowest-privilege role: DEV)
-                var role = await _roleRepository.GetByNameAsync(RoleName.DEV.ToString());
+                var role = await _roleRepository.GetByNameAsync(RoleName.Desenvolvedor.ToString());
                 if (role == null)
                 {
-                    role = new Role { Name = RoleName.DEV.ToString() };
+                    role = new Role { Name = RoleName.Desenvolvedor.ToString() };
                     await _roleRepository.AddAsync(role);
                 }
 

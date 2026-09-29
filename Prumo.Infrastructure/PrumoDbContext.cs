@@ -21,5 +21,11 @@ namespace Plantonize.Plantao.Infrastructure
             base.OnModelCreating(modelBuilder);
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(IConfigurationScan).Assembly);
         }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            // Todos os enums são gravados como texto (Seção 3.1 do plano de conformidade).
+            configurationBuilder.Properties<Enum>().HaveConversion<string>();
+        }
     }
 }

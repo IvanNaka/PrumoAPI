@@ -17,7 +17,7 @@ namespace Prumo.Infrastructure.Configurations
 
             builder.Property(a => a.ProjectId).HasColumnType("uuid").IsRequired();
             builder.Property(a => a.Message).HasMaxLength(1000).IsRequired();
-            builder.Property(a => a.Type).IsRequired();
+            builder.Property(a => a.Type).HasConversion<string>().IsRequired();
 
             builder.HasIndex(a => a.ProjectId);
         }

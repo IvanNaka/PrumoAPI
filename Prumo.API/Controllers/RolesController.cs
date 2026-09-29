@@ -20,7 +20,7 @@ namespace Prumo.API.Controllers
         }
 
         /// <summary>
-        /// Lists all available roles (e.g. Admin, PO, Gerente, Diretoria, TechLead, ScrumMaster, QA, DEV).
+        /// Lists all available roles (Desenvolvedor, QA, ProductOwner, TechLead, GerenteProjeto, Diretoria, Administrador).
         /// Used by the front-end to populate the RoleId selector when creating/editing users.
         /// </summary>
         [HttpGet]
