@@ -103,7 +103,7 @@ namespace Prumo.Application.Services
                         PriorityCriteriaId = evaluation.PriorityCriteriaId,
                         ProjectId = projectCreated.Id,
                         UserId = projectDTO.OwnerId,
-                        Value = evaluation.Value,
+                        Score = (int)evaluation.Value,
                         CreatedDate = DateTime.UtcNow
                     };
                     await _projectEvaluationRepository.AddAsync(ev);
@@ -142,7 +142,7 @@ namespace Prumo.Application.Services
                     PriorityCriteriaId = pe.PriorityCriteriaId,
                     PriorityCriteriaName = pe.PriorityCriteria?.Name,
                     UserId = pe.UserId,
-                    Value = pe.Value,
+                    Value = pe.Score,
                     Weight = pe.PriorityCriteria.ValueWeight
                 }).ToList()
             };

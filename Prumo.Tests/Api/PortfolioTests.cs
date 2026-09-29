@@ -86,7 +86,7 @@ namespace Prumo.Tests.Api
             var portfolio = await PortfolioAsync(admin);
 
             // Criado -> Configurado (primeiro critério, automático)
-            var criterio = await client.PostAsJsonAsync("/api/PriorityCriteria", new { name = "Valor", valueWeight = 4, portfolioId = portfolio.Id });
+            var criterio = await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios", new { nome = "Valor", peso = 4, tipo = "Beneficio" });
             Assert.True(criterio.IsSuccessStatusCode);
             Assert.Equal("Configurado", await StatusAsync(portfolio.Id));
 
@@ -110,7 +110,7 @@ namespace Prumo.Tests.Api
 
             await SetStatusAsync(portfolio.Id, PortfolioStatus.Monitoramento);
             // Monitoramento + critério alterado -> Reavaliacao (automático)
-            await client.PostAsJsonAsync("/api/PriorityCriteria", new { name = "Risco", valueWeight = 2, portfolioId = portfolio.Id });
+            await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios", new { nome = "Risco", peso = 2, tipo = "Custo" });
             Assert.Equal("Reavaliacao", await StatusAsync(portfolio.Id));
 
             await SetStatusAsync(portfolio.Id, PortfolioStatus.Monitoramento);

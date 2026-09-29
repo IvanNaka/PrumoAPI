@@ -14,9 +14,24 @@ namespace Prumo.Domain.Entities
 
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public ProjectStatus Status { get; set; }
+        public ProjectStatus Status { get; set; } = ProjectStatus.Rascunho;
         public Guid OwnerId { get; set; }
         public User Owner { get; set; }
+
+        /// <summary>Prioridade (padrão Media); desempate do ranking (F2).</summary>
+        public Priority Priority { get; set; } = Priority.Media;
+
+        /// <summary>StatusAvaliacao (Figura 28). Padrão NaoAvaliado.</summary>
+        public EvaluationStatus EvaluationStatus { get; set; } = EvaluationStatus.NaoAvaliado;
+
+        /// <summary>ScoreAtual (0 a 100); nulo enquanto não estiver priorizado.</summary>
+        public decimal? CurrentScore { get; set; }
+
+        /// <summary>PosicaoRanking.</summary>
+        public int? RankingPosition { get; set; }
+
+        /// <summary>DataUltimaPriorizacao.</summary>
+        public DateTime? LastPrioritizationDate { get; set; }
 
 
         // Optional navigations

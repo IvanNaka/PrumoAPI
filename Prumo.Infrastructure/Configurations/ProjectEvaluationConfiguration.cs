@@ -16,14 +16,23 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(pe => pe.Id).HasColumnType("uuid").ValueGeneratedOnAdd();
 
             builder.Property(pe => pe.PriorityCriteriaId).HasColumnType("uuid").IsRequired();
-            builder.Property(pe => pe.Value).HasColumnType("numeric").IsRequired();
+            builder.Property(pe => pe.Score).IsRequired();
+            builder.Property(pe => pe.EvaluatedAt).IsRequired();
 
             builder.HasIndex(pe => pe.PriorityCriteriaId);
-            builder.HasIndex(pe => pe.ProjectId);
+            // Uma nota por critério em cada projeto.
+            builder.HasIndex(pe => new { pe.ProjectId, pe.PriorityCriteriaId }).IsUnique();
 
+            // RN11: critério com notas não pode ser excluído.
             builder.HasOne(pe => pe.PriorityCriteria)
                 .WithMany()
                 .HasForeignKey(pe => pe.PriorityCriteriaId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .IsRequired();
+
+            builder.HasOne(pe => pe.Project)
+                .WithMany(p => p.ProjectEvaluations)
+                .HasForeignKey(pe => pe.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade)
                 .IsRequired();
 

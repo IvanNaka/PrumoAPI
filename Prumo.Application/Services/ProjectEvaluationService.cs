@@ -34,7 +34,7 @@ namespace Prumo.Application.Services
             {
                 PriorityCriteriaId = dto.PriorityCriteriaId,
                 UserId = (Guid)(dto.UserId),
-                Value = dto.Value
+                Score = (int)dto.Value
             };
 
             await _repository.AddAsync(entity);
@@ -54,7 +54,7 @@ namespace Prumo.Application.Services
                 Id = entity.Id,
                 PriorityCriteriaId = entity.PriorityCriteriaId,
                 UserId = entity.UserId,
-                Value = entity.Value,
+                Value = entity.Score,
                 Weight = entity.PriorityCriteria.ValueWeight
             };
         }

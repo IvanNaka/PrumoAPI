@@ -25,7 +25,10 @@ namespace Prumo.Infrastructure.Configurations
 
             builder.Property(p => p.Name).HasMaxLength(300).IsRequired();
             builder.Property(p => p.Description).HasMaxLength(2000).IsRequired(false);
-            builder.Property(p => p.Status).HasConversion<string>().IsRequired();
+            builder.Property(p => p.Status).HasConversion<string>().HasMaxLength(30).IsRequired();
+            builder.Property(p => p.Priority).HasConversion<string>().HasMaxLength(20).IsRequired();
+            builder.Property(p => p.EvaluationStatus).HasConversion<string>().HasMaxLength(30).IsRequired();
+            builder.Property(p => p.CurrentScore).HasColumnType("numeric(5,2)");
 
             builder.HasIndex(p => p.PortfolioId);
             builder.HasIndex(p => p.OwnerId);
