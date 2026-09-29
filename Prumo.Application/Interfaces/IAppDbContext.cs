@@ -33,6 +33,7 @@ namespace Prumo.Application.Interfaces
         DbSet<ExternalIssue> Issues { get; }
         DbSet<ExternalWorklog> Worklogs { get; }
         DbSet<Alert> Alerts { get; }
+        DbSet<Report> Reports { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 

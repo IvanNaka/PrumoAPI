@@ -7,7 +7,11 @@ namespace Prumo.API
     {
         public static void Main(string[] args)
         {
-            Env.Load(); 
+            Env.Load();
+
+            // Relatórios em PDF (T22): licença Community do QuestPDF.
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
             CreateHostBuilder(args).Build().Run();
         }
 

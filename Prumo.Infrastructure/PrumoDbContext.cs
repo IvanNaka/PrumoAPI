@@ -35,6 +35,7 @@ namespace Plantonize.Plantao.Infrastructure
         public DbSet<ExternalIssue> Issues => Set<ExternalIssue>();
         public DbSet<ExternalWorklog> Worklogs => Set<ExternalWorklog>();
         public DbSet<Alert> Alerts => Set<Alert>();
+        public DbSet<Report> Reports => Set<Report>();
 
         public void DiscardChanges() => ChangeTracker.Clear();
 
