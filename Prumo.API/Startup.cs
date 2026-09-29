@@ -1,14 +1,16 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using System.Text.Json.Serialization;
-
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Plantonize.Plantao.Infrastructure;
 using Prumo.API.Extensions;
-
+using Prumo.API.Infrastructure;
+using Prumo.Application.Common;
+using Prumo.Application.Services;
+using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Prumo.API
 {
@@ -20,7 +22,7 @@ namespace Prumo.API
             DotNetEnv.Env.Load();
             Configuration = new ConfigurationBuilder()
                 .AddConfiguration(configuration)
-                .AddEnvironmentVariables() 
+                .AddEnvironmentVariables()
                 .Build();
         }
 
@@ -30,15 +32,14 @@ namespace Prumo.API
         {
             services.AddHttpLogging(httpLogging =>
             {
-                httpLogging.LoggingFields = HttpLoggingFields.All;
-                httpLogging.RequestHeaders.Add("Request-Header-Demo");
-                httpLogging.ResponseHeaders.Add("Response-Header-Demo");
-                httpLogging.MediaTypeOptions.
-                AddText("application/javascript");
+                // O corpo das requisições não é registrado: ele pode conter o token do Jira (T16).
+                httpLogging.LoggingFields = HttpLoggingFields.RequestPropertiesAndHeaders | HttpLoggingFields.ResponseStatusCode;
+                httpLogging.RequestHeaders.Remove("Authorization");
                 httpLogging.RequestBodyLogLimit = BODY_LOG_LIMIT;
                 httpLogging.ResponseBodyLogLimit = BODY_LOG_LIMIT;
             });
 
+            services.AddSingleton(Configuration);
             services.AddApplicationDependencies();
 
             services.AddAuthorization();
@@ -46,12 +47,28 @@ namespace Prumo.API
             services.AddDbContext<PrumoDbContext>(options =>
                     options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
 
+            services.AddProblemDetails();
+            services.AddExceptionHandler<ProblemDetailsExceptionHandler>();
+
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    // Allow enums to be sent/received as strings (e.g. "Jira") instead of only
-                    // numeric indices, which is what the front-end sends.
+                    // Enums trafegam como texto, com os mesmos valores do banco (Seção 3.1).
                     options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+                })
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    // RN04: campo obrigatório vazio / corpo inválido -> 400 com a lista em "errors".
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var problem = new ValidationProblemDetails(context.ModelState)
+                        {
+                            Status = StatusCodes.Status400BadRequest,
+                            Title = ProblemTitles.For(400),
+                            Detail = Messages.RN04_CamposObrigatorios,
+                        };
+                        return new BadRequestObjectResult(problem) { ContentTypes = { "application/problem+json" } };
+                    };
                 });
             services.AddHealthChecks();
             services.AddHttpContextAccessor();
@@ -59,15 +76,14 @@ namespace Prumo.API
             {
                 options.AddPolicy("AllowAll", policy =>
                 {
-                    policy.AllowAnyOrigin()    // Allows any origin (e.g., http://localhost:3000)
-                          .AllowAnyMethod()    // Allows any HTTP method (GET, POST, PUT, DELETE, etc.)
-                          .AllowAnyHeader();   // Allows any headers
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader()
+                          .WithExposedHeaders("Content-Disposition");
                 });
             });
-            var jwtKey = Configuration["Jwt:Key"];
-            var jwtIssuer = Configuration["Jwt:Issuer"];
-            var jwtAudience = Configuration["Jwt:Audience"];
 
+            var jwtKey = Configuration["Jwt:Key"];
             if (string.IsNullOrWhiteSpace(jwtKey))
             {
                 // Fail fast with a clear message at startup. Without this guard, an empty
@@ -80,61 +96,68 @@ namespace Prumo.API
                     "variável de ambiente (Jwt__Key) ou no arquivo .env antes de iniciar a API.");
             }
 
-            var authenticationBuilder = services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-            .AddCookie("Cookies");
-
-            var googleClientId = Configuration["Authentication:Google:ClientId"];
-            var googleClientSecret = Configuration["Authentication:Google:ClientSecret"];
-
-            // The actual Google login flow (POST /api/auth/google) validates the ID token
-            // directly via Google.Apis.Auth using only Authentication:Google:ClientId - it does
-            // NOT depend on this ASP.NET Core OAuth handler (used only for server-side redirect
-            // challenges, which this API doesn't perform). Registering it anyway with a missing
-            // ClientSecret would fail GoogleOptions validation on every request (any scheme that
-            // implements IAuthenticationRequestHandler is initialized by the authentication
-            // middleware to check its callback path), crashing the whole API. So only register
-            // it when both values are actually configured.
-            if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
-            {
-                authenticationBuilder.AddGoogle("Google", options =>
+            // D01: o login é feito pelo Google no front-end; o back-end valida o ID token em
+            // POST /api/auth/google e emite o próprio JWT, validado aqui.
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
                 {
-                    options.ClientId = googleClientId;
-                    options.ClientSecret = googleClientSecret;
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidIssuer = JwtSettings.Issuer(Configuration),
+                        ValidateAudience = true,
+                        ValidAudience = JwtSettings.Audience(Configuration),
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.FromMinutes(1),
+                    };
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnChallenge = async context =>
+                        {
+                            // 401 também no formato ProblemDetails (RN01).
+                            context.HandleResponse();
+                            await ProblemWriter.WriteAsync(context.HttpContext, new ProblemDetails
+                            {
+                                Status = StatusCodes.Status401Unauthorized,
+                                Title = ProblemTitles.For(401),
+                                Detail = Messages.RN01_TokenInvalido,
+                            });
+                        },
+                    };
                 });
-            }
 
-            authenticationBuilder.AddJwtBearer(JwtBearerDefaults.AuthenticationScheme, options =>
-            {
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = !string.IsNullOrEmpty(jwtIssuer),
-                    ValidIssuer = jwtIssuer,
-                    ValidateAudience = !string.IsNullOrEmpty(jwtAudience),
-                    ValidAudience = jwtAudience,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-                    ValidateLifetime = true
-                };
-            });
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Prumo API", Version = "v1" });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    In = ParameterLocation.Header,
+                    Name = "Authorization",
+                    Type = SecuritySchemeType.Http,
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme { Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "Bearer" } },
+                        Array.Empty<string>()
+                    },
+                });
             });
         }
 
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseExceptionHandler();
             app.UseRouting();
             app.UseHttpLogging();
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
@@ -143,14 +166,9 @@ namespace Prumo.API
             app.UseAuthentication();
             app.UseAuthorization();
 
-            RoleSeeder.SeedRolesAsync(app.ApplicationServices).GetAwaiter().GetResult();
+            AdminSeeder.SeedAsync(app.ApplicationServices).GetAwaiter().GetResult();
 
             app.UseHealthChecks("/");
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "FleetManager API v1");
-                c.OAuthScopeSeparator(" ");
-            });
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

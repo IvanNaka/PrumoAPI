@@ -1,21 +1,18 @@
-﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders; 
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Prumo.Application.Interfaces;
 using Prumo.Domain.Entities;
-
-
-using Prumo.Infrastructure.Configurations; 
+using Prumo.Infrastructure.Configurations;
 
 namespace Plantonize.Plantao.Infrastructure
 {
-    public class PrumoDbContext : DbContext
+    public class PrumoDbContext : DbContext, IAppDbContext
     {
         public PrumoDbContext(DbContextOptions<PrumoDbContext> options, IConfiguration configuration) : base(options){}
-        //public DbSet<Medico> Medicos { get; set; }
-        //public DbSet<Hospital> Hospitais { get; set; }
-        //public DbSet<Domain.Entities.Plantao> Plantoes { get; set; }
-        //public DbSet<Atendimento> Atendimentos { get; set; }
-        //public DbSet<Atendente> Atendentes { get; set; }
+
+        public DbSet<User> Users => Set<User>();
+        public DbSet<UserRole> UserRoles => Set<UserRole>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

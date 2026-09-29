@@ -1,110 +1,126 @@
+using Microsoft.EntityFrameworkCore;
 using Prumo.Application.Common;
 using Prumo.Application.DTOs.User;
 using Prumo.Application.Interfaces;
 using Prumo.Domain.Entities;
-using Prumo.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Prumo.Domain.Enums;
 
 namespace Prumo.Application.Services
 {
+    // RF03 — gestão de usuários (somente Administrador).
     public class UserService : IUserService
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IAppDbContext _db;
+        private readonly ICurrentUserService _currentUser;
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IAppDbContext db, ICurrentUserService currentUser)
         {
-            _userRepository = userRepository;
+            _db = db;
+            _currentUser = currentUser;
         }
 
         public async Task<UserDto?> GetByIdAsync(Guid id)
         {
-            var user = await _userRepository.GetByIdWithRoleAsync(id);
+            var user = await _db.Users.Include(u => u.Roles).AsNoTracking().SingleOrDefaultAsync(u => u.Id == id);
             return user == null ? null : MapToDto(user);
         }
 
         public async Task<IEnumerable<UserDto>> GetAllAsync()
         {
-            var users = await _userRepository.GetAllWithRoleAsync();
+            var users = await _db.Users.Include(u => u.Roles).AsNoTracking().OrderBy(u => u.Name).ToListAsync();
             return users.Select(MapToDto);
-        }
-
-        public async Task<bool> EmailExistsAsync(string email)
-        {
-            var user = await _userRepository.GetByEmailAsync(email);
-            return user != null;
         }
 
         public async Task<UserDto> CreateAsync(CreateUserDto dto)
         {
-            var existing = await _userRepository.GetByEmailAsync(dto.Email);
-            if (existing != null)
+            var email = (dto.Email ?? string.Empty).Trim().ToLowerInvariant();
+            var roles = ParseRoles(dto.Perfis);
+
+            if (await _db.Users.AnyAsync(u => u.Email == email))
             {
-                throw new InvalidOperationException("A user with this email already exists.");
+                throw new BusinessRuleException(409, "Já existe um usuário com este e-mail.");
             }
 
             var user = new User
             {
-                Name = dto.Name,
-                Email = dto.Email,
-                PasswordHash = PasswordHasher.Hash(dto.Password),
-                RoleId = dto.RoleId
+                Name = dto.Nome.Trim(),
+                Email = email,
+                IsActive = true,
             };
-
-            var created = await _userRepository.AddAsync(user);
-            var createdWithRole = await _userRepository.GetByIdWithRoleAsync(created.Id);
-
-            return MapToDto(createdWithRole ?? created);
-        }
-
-        public async Task UpdateAsync(UpdateUserDto dto)
-        {
-            var existing = await _userRepository.GetByIdAsync(dto.Id);
-            if (existing == null)
+            foreach (var role in roles)
             {
-                throw new InvalidOperationException("User not found.");
+                user.Roles.Add(new UserRole { UserId = user.Id, Role = role });
             }
 
-            if (!string.Equals(existing.Email, dto.Email, StringComparison.OrdinalIgnoreCase))
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+            return MapToDto(user);
+        }
+
+        public async Task<UserDto> UpdateAsync(Guid id, UpdateUserDto dto)
+        {
+            var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == id)
+                ?? throw Messages.NotFound("Usuário não encontrado.");
+            var roles = ParseRoles(dto.Perfis);
+
+            user.Name = dto.Nome.Trim();
+            user.UpdatedDate = DateTime.UtcNow;
+
+            foreach (var existing in user.Roles.Where(r => !roles.Contains(r.Role)).ToList())
             {
-                var emailOwner = await _userRepository.GetByEmailAsync(dto.Email);
-                if (emailOwner != null && emailOwner.Id != dto.Id)
+                user.Roles.Remove(existing);
+            }
+            foreach (var role in roles.Where(r => user.Roles.All(ur => ur.Role != r)))
+            {
+                user.Roles.Add(new UserRole { UserId = user.Id, Role = role });
+            }
+
+            await _db.SaveChangesAsync();
+            return MapToDto(user);
+        }
+
+        public async Task SetActiveAsync(Guid id, bool active)
+        {
+            var user = await _db.Users.SingleOrDefaultAsync(u => u.Id == id)
+                ?? throw Messages.NotFound("Usuário não encontrado.");
+
+            if (!active && _currentUser.UserId == id)
+            {
+                throw new BusinessRuleException(409, "Você não pode desativar o próprio usuário.");
+            }
+
+            user.IsActive = active;
+            user.UpdatedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+        }
+
+        private static List<RoleName> ParseRoles(IEnumerable<string>? perfis)
+        {
+            var roles = new List<RoleName>();
+            foreach (var perfil in perfis ?? Enumerable.Empty<string>())
+            {
+                if (Enum.TryParse<RoleName>(perfil, ignoreCase: true, out var role) && Enum.IsDefined(role) && !roles.Contains(role))
                 {
-                    throw new InvalidOperationException("A user with this email already exists.");
+                    roles.Add(role);
                 }
             }
 
-            existing.Name = dto.Name;
-            existing.Email = dto.Email;
-            existing.RoleId = dto.RoleId;
-            existing.UpdatedDate = DateTime.UtcNow;
-
-            if (!string.IsNullOrWhiteSpace(dto.Password))
+            if (roles.Count == 0)
             {
-                existing.PasswordHash = PasswordHasher.Hash(dto.Password);
+                throw new BusinessRuleException(400, "Selecione ao menos um perfil.");
             }
 
-            await _userRepository.UpdateAsync(existing);
+            return roles;
         }
 
-        public async Task DeleteAsync(Guid id)
+        private static UserDto MapToDto(User user) => new()
         {
-            await _userRepository.DeleteAsync(id);
-        }
-
-        private static UserDto MapToDto(User user)
-        {
-            return new UserDto
-            {
-                Id = user.Id,
-                Name = user.Name,
-                Email = user.Email,
-                RoleId = user.RoleId,
-                RoleName = user.Role?.Name,
-                CreatedDate = user.CreatedDate
-            };
-        }
+            Id = user.Id,
+            Nome = user.Name,
+            Email = user.Email,
+            Perfis = user.Roles.Select(r => r.Role.ToString()).OrderBy(r => r).ToList(),
+            Ativo = user.IsActive,
+            DataCriacao = user.CreatedDate,
+        };
     }
 }

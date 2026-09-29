@@ -1,7 +1,4 @@
 using Prumo.Application.DTOs.User;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Prumo.Application.Interfaces
 {
@@ -10,8 +7,7 @@ namespace Prumo.Application.Interfaces
         Task<UserDto?> GetByIdAsync(Guid id);
         Task<IEnumerable<UserDto>> GetAllAsync();
         Task<UserDto> CreateAsync(CreateUserDto dto);
-        Task UpdateAsync(UpdateUserDto dto);
-        Task DeleteAsync(Guid id);
-        Task<bool> EmailExistsAsync(string email);
+        Task<UserDto> UpdateAsync(Guid id, UpdateUserDto dto);
+        Task SetActiveAsync(Guid id, bool active);
     }
 }

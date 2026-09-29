@@ -1,3 +1,4 @@
+using Plantonize.Plantao.Infrastructure;
 using Plantonize.Plantao.Infrastructure.Repositories;
 using Prumo.Application.Interfaces;
 using Prumo.Application.Services;
@@ -12,12 +13,10 @@ namespace Prumo.API.Extensions
         {
             // Domain-specific repositories
             services.AddScoped<IProjectRepository, ProjectRepository>();
-            services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IPortfolioRepository,    PortfolioRepository>();
             services.AddScoped<IPriorityCriteriaRepository, PriorityCriteriaRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IRoleRepository, RoleRepository>();
             services.AddScoped<IProjectEvaluationRepository, ProjectEvaluationRepository>();
             services.AddScoped<IProjectDependencyRepository, ProjectDependencyRepository>();
             services.AddScoped<ITeamRepository, TeamRepository>();
@@ -26,6 +25,11 @@ namespace Prumo.API.Extensions
             services.AddScoped<ITeamCapacityRepository, TeamCapacityRepository>();
             services.AddScoped<IRoadmapRepository, RoadmapRepository>();
 
+
+            // Application infrastructure
+            services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<PrumoDbContext>());
+            services.AddScoped<ICurrentUserService, Prumo.API.Infrastructure.CurrentUserService>();
+            services.AddSingleton<IGoogleTokenValidator, GoogleTokenValidator>();
 
             // Register Services
             services.AddScoped<IProjectService, ProjectService>();

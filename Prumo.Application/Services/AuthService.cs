@@ -1,102 +1,132 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Google.Apis.Auth;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Prumo.Application.Common;
+using Prumo.Application.DTOs.Auth;
 using Prumo.Application.Interfaces;
 using Prumo.Domain.Entities;
-using Prumo.Domain.Enums;
-using Prumo.Domain.Interfaces;
 
 namespace Prumo.Application.Services
 {
+    // UC1 / RF01 / D01: login exclusivo com Google -> validação no back-end -> JWT próprio.
     public class AuthService : IAuthService
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IRoleRepository _roleRepository;
+        private readonly IAppDbContext _db;
+        private readonly IGoogleTokenValidator _googleValidator;
         private readonly IConfiguration _configuration;
+        private readonly ICurrentUserService _currentUser;
 
-        public AuthService(IUserRepository userRepository, IRoleRepository roleRepository, IConfiguration configuration)
+        public AuthService(
+            IAppDbContext db,
+            IGoogleTokenValidator googleValidator,
+            IConfiguration configuration,
+            ICurrentUserService currentUser)
         {
-            _userRepository = userRepository;
-            _roleRepository = roleRepository;
+            _db = db;
+            _googleValidator = googleValidator;
             _configuration = configuration;
+            _currentUser = currentUser;
         }
 
-        public async Task<string> SignInWithGoogleAsync(string idToken)
+        public async Task<LoginResponseDto> LoginGoogleAsync(string idToken)
         {
-            // Validate token with Google
-            var googleClientId = _configuration["Authentication:Google:ClientId"];
-            var settings = new GoogleJsonWebSignature.ValidationSettings
+            if (string.IsNullOrWhiteSpace(idToken))
             {
-                Audience = new[] { googleClientId }
-            };
-
-            var payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
-
-            // Find or create user
-            var email = payload.Email ?? throw new InvalidOperationException("Google token has no email");
-            var user = await _userRepository.GetByEmailAsync(email);
-            if (user == null)
-            {
-                // Ensure a default role exists (lowest-privilege role: DEV)
-                var role = await _roleRepository.GetByNameAsync(RoleName.Desenvolvedor.ToString());
-                if (role == null)
-                {
-                    role = new Role { Name = RoleName.Desenvolvedor.ToString() };
-                    await _roleRepository.AddAsync(role);
-                }
-
-                user = new User
-                {
-                    Email = email,
-                    Name = payload.Name ?? email,
-                    RoleId = role.Id
-                };
-
-                user = await _userRepository.AddAsync(user);
+                throw new BusinessRuleException(401, Messages.RN01_TokenInvalido);
             }
 
-            // Reload with Role navigation populated so the role claim is always present in the JWT
-            user = await _userRepository.GetByIdWithRoleAsync(user.Id) ?? user;
+            string googleEmail;
+            try
+            {
+                googleEmail = await _googleValidator.ValidateAndGetEmailAsync(idToken);
+            }
+            catch (InvalidJwtException)
+            {
+                throw new BusinessRuleException(401, Messages.RN01_TokenInvalido);
+            }
+            catch (HttpRequestException)
+            {
+                throw new BusinessRuleException(503, Messages.RN02_FalhaGoogle);
+            }
 
-            // Generate JWT
-            return GenerateJwtToken(user);
+            var email = googleEmail.Trim().ToLowerInvariant();
+            var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == email);
+            if (user is null || !user.IsActive)
+            {
+                throw new BusinessRuleException(403, Messages.RN03_SemPermissao);
+            }
+
+            var expiraEm = DateTime.UtcNow.AddHours(GetExpirationHours());
+            return new LoginResponseDto
+            {
+                Token = GenerateJwtToken(user, expiraEm),
+                ExpiraEm = expiraEm,
+                Usuario = MapUser(user),
+            };
         }
 
-        private string GenerateJwtToken(User user)
+        public async Task<AuthUserDto> GetCurrentUserAsync()
+        {
+            var userId = _currentUser.RequireUserId();
+            var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == userId);
+            if (user is null || !user.IsActive)
+            {
+                throw new BusinessRuleException(403, Messages.RN03_SemPermissao);
+            }
+
+            return MapUser(user);
+        }
+
+        private int GetExpirationHours()
+        {
+            if (int.TryParse(_configuration["Jwt:ExpiraHoras"], out var hours) && hours > 0)
+            {
+                return hours;
+            }
+
+            return 8;
+        }
+
+        private string GenerateJwtToken(User user, DateTime expiresAt)
         {
             var key = _configuration["Jwt:Key"] ?? throw new InvalidOperationException("Jwt:Key missing");
-            var issuer = _configuration["Jwt:Issuer"];
-            var audience = _configuration["Jwt:Audience"];
-            var expiresMinutes = int.TryParse(_configuration["Jwt:ExpiresMinutes"], out var m) ? m : 60;
 
+            // claims: sub=Id, email, name e um ClaimTypes.Role para cada perfil.
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
-                new Claim(ClaimTypes.Name, user.Name)
+                new Claim("name", user.Name),
             };
+            claims.AddRange(user.Roles.Select(r => new Claim("role", r.Role.ToString())));
 
-            // optionally add role claim if Role navigation not loaded
-            if (user.Role != null)
-            {
-                claims.Add(new Claim(ClaimTypes.Role, user.Role.Name.ToString()));
-            }
-
-            var keyBytes = Encoding.UTF8.GetBytes(key);
-            var signingKey = new SymmetricSecurityKey(keyBytes);
-            var creds = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
-
+            var signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
             var token = new JwtSecurityToken(
-                issuer,
-                audience,
+                JwtSettings.Issuer(_configuration),
+                JwtSettings.Audience(_configuration),
                 claims,
-                expires: DateTime.UtcNow.AddMinutes(expiresMinutes),
-                signingCredentials: creds);
+                expires: expiresAt,
+                signingCredentials: new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256));
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
+        private static AuthUserDto MapUser(User user) => new()
+        {
+            Id = user.Id,
+            Nome = user.Name,
+            Email = user.Email,
+            Perfis = user.Roles.Select(r => r.Role.ToString()).OrderBy(r => r).ToList(),
+        };
+    }
+
+    public static class JwtSettings
+    {
+        public static string Issuer(IConfiguration configuration) => configuration["Jwt:Issuer"] ?? "prumo-api";
+        public static string Audience(IConfiguration configuration) => configuration["Jwt:Audience"] ?? "prumo-web";
     }
 }

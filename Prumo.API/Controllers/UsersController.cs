@@ -1,16 +1,14 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prumo.Application.DTOs.User;
 using Prumo.Application.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Prumo.API.Controllers
 {
-    // NOTE: [Authorize] temporarily removed - all endpoints are open while role
-    // permissions are disabled. Re-add [Authorize] / role checks when re-enabling.
+    // RF03 — gestão de usuários.
     [ApiController]
-    [Route("api/[controller]")]
+    [Authorize]
+    [Route("api/usuarios")]
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -20,86 +18,36 @@ namespace Prumo.API.Controllers
             _userService = userService;
         }
 
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
+        {
+            return Ok(await _userService.GetAllAsync());
+        }
+
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<UserDto>> GetById(Guid id)
         {
             var user = await _userService.GetByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(user);
-        }
-
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDto>>> GetAll()
-        {
-            var users = await _userService.GetAllAsync();
-            return Ok(users);
+            return user == null ? NotFound() : Ok(user);
         }
 
         [HttpPost]
-        public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserDto createDto)
+        public async Task<ActionResult<UserDto>> Create([FromBody] CreateUserDto dto)
         {
-            if (createDto == null)
-            {
-                return BadRequest("Invalid payload.");
-            }
-
-            if (string.IsNullOrWhiteSpace(createDto.Name) ||
-                string.IsNullOrWhiteSpace(createDto.Email) ||
-                string.IsNullOrWhiteSpace(createDto.Password))
-            {
-                return BadRequest("Name, email and password are required.");
-            }
-
-            try
-            {
-                var createdUser = await _userService.CreateAsync(createDto);
-                return CreatedAtAction(nameof(GetById), new { id = createdUser.Id }, createdUser);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
+            var created = await _userService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateUserDto updateDto)
+        public async Task<ActionResult<UserDto>> Update(Guid id, [FromBody] UpdateUserDto dto)
         {
-            if (updateDto == null || id != updateDto.Id)
-            {
-                return BadRequest("ID mismatch or invalid payload.");
-            }
-
-            var existingUser = await _userService.GetByIdAsync(id);
-            if (existingUser == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                await _userService.UpdateAsync(updateDto);
-                return NoContent();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
+            return Ok(await _userService.UpdateAsync(id, dto));
         }
 
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
+        [HttpPatch("{id:guid}/ativo")]
+        public async Task<IActionResult> SetActive(Guid id, [FromBody] SetUserActiveDto dto)
         {
-            var existingUser = await _userService.GetByIdAsync(id);
-            if (existingUser == null)
-            {
-                return NotFound();
-            }
-
-            await _userService.DeleteAsync(id);
+            await _userService.SetActiveAsync(id, dto.Ativo);
             return NoContent();
         }
     }

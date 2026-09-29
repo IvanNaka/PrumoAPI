@@ -177,7 +177,7 @@ Enums gravados como inteiro no banco: `Alert.Type`, `Integration.Type`. Os demai
 |---|---|---|
 | Fase 0 | CONCLUÍDA | inventário acima |
 | T01 | CONCLUÍDA | 12 enums conforme 3.1, todos gravados como texto (convenção global no DbContext); migration `T01_Enums` converte dados antigos; `enums.ts`/`rotulos.ts` no front; teste `EnumsTests` |
-| T02 | PENDENTE | |
+| T02 | CONCLUÍDA | Login só Google (`POST /api/auth/google`, `GET /api/auth/me`), RN01–RN03 em ProblemDetails, JWT com claim `role` por perfil, `UserRoles` (D03), sem senha; migration `T02_RemoverSenha` (copia perfil antigo); seed do admin (`Admin:Email`); front: GSI no `index.html`, sessão no `sessionStorage`, interceptor e `authGuard`. Testes: `AuthTests` (6 casos) e `auth.service.spec`. Guarda de 'time obrigatório' removida (item EXTRA). |
 | T03 | PENDENTE | |
 | T04 | PENDENTE | |
 | T05 | PENDENTE | |
