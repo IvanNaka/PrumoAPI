@@ -132,7 +132,7 @@ namespace Prumo.Application.Services
             {
                 var provider = _providers.GetProvider(integration.Type)
                     ?? throw new BusinessRuleException(400, "Integração planejada para versão futura.");
-                ok = await provider.TestConnectionAsync(Credentials(integration));
+                ok = await provider.TestConnectionAsync(Credentials(integration, _protector, _logger));
             }
             catch (BusinessRuleException)
             {
@@ -154,24 +154,24 @@ namespace Prumo.Application.Services
             }
         }
 
-        private IntegrationCredentials Credentials(Integration integration)
+        internal static IntegrationCredentials Credentials(Integration integration, ISecretProtector protector, ILogger logger)
         {
             string token;
             try
             {
-                token = _protector.Unprotect(integration.Token);
+                token = protector.Unprotect(integration.Token);
             }
             catch (Exception ex)
             {
                 // Token antigo sem criptografia ou chave perdida: força nova autenticação.
-                _logger.LogWarning(ex, "Não foi possível descriptografar o token do Jira.");
+                logger.LogWarning(ex, "Não foi possível descriptografar o token do Jira.");
                 token = string.Empty;
             }
 
             return new IntegrationCredentials(integration.ApiUrl, integration.Email, token);
         }
 
-        private static IntegracaoJiraDto Map(Integration? integration) => integration == null
+        internal static IntegracaoJiraDto Map(Integration? integration) => integration == null
             ? new IntegracaoJiraDto()
             : new IntegracaoJiraDto
             {

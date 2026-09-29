@@ -133,6 +133,25 @@ namespace Prumo.Tests.Api
                 Testes.Add(credentials);
                 return Task.FromResult(credentials.ApiToken == TokenValido);
             }
+
+            /// <summary>Issues por chave de projeto e worklogs por chave de issue.</summary>
+            public Dictionary<string, List<ExternalIssueData>> Issues { get; } = new();
+            public Dictionary<string, List<ExternalWorklogData>> Worklogs { get; } = new();
+            public Exception? Erro { get; set; }
+            public List<string> WorklogsConsultados { get; } = new();
+
+            public Task<IReadOnlyList<ExternalIssueData>> GetIssuesAsync(IntegrationCredentials credentials, string projectKey, CancellationToken cancellationToken = default)
+            {
+                if (Erro != null) throw Erro;
+                if (credentials.ApiToken != TokenValido) throw new IntegrationAuthException("401");
+                return Task.FromResult<IReadOnlyList<ExternalIssueData>>(Issues.GetValueOrDefault(projectKey) ?? new List<ExternalIssueData>());
+            }
+
+            public Task<IReadOnlyList<ExternalWorklogData>> GetWorklogsAsync(IntegrationCredentials credentials, string issueKey, CancellationToken cancellationToken = default)
+            {
+                WorklogsConsultados.Add(issueKey);
+                return Task.FromResult<IReadOnlyList<ExternalWorklogData>>(Worklogs.GetValueOrDefault(issueKey) ?? new List<ExternalWorklogData>());
+            }
         }
 
         private class FakeGoogleValidator : IGoogleTokenValidator

@@ -82,17 +82,37 @@ namespace Prumo.Application.Indicators
             return CapacityCalculator.CalcularEquipe(team.Id, team.Name, members, issues, worklogs, year, month);
         }
 
-        /// <summary>Worklogs de cada projeto (horas e e-mail do autor). Alimentado pela integração Jira (T17).</summary>
-        protected virtual Task<Dictionary<Guid, List<WorklogHours>>> WorklogHoursAsync(IReadOnlyCollection<Guid> projectIds) =>
-            Task.FromResult(new Dictionary<Guid, List<WorklogHours>>());
+        /// <summary>Worklogs de cada projeto (horas e e-mail do autor), vindos do Jira (T17).</summary>
+        protected virtual async Task<Dictionary<Guid, List<WorklogHours>>> WorklogHoursAsync(IReadOnlyCollection<Guid> projectIds)
+        {
+            var rows = await _db.Worklogs.AsNoTracking()
+                .Where(w => projectIds.Contains(w.Issue.ProjectId))
+                .Select(w => new { w.Issue.ProjectId, w.AuthorEmail, w.Hours })
+                .ToListAsync();
+            return rows
+                .GroupBy(r => r.ProjectId)
+                .ToDictionary(g => g.Key, g => g.Select(r => new WorklogHours(r.AuthorEmail, r.Hours)).ToList());
+        }
 
-        /// <summary>Issues não concluídas atribuídas aos e-mails (demanda do F9). Alimentado pelo Jira (T17).</summary>
-        protected virtual Task<List<OpenIssueDemand>> OpenIssuesForEmailsAsync(IReadOnlyCollection<string> emails) =>
-            Task.FromResult(new List<OpenIssueDemand>());
+        /// <summary>Issues não concluídas atribuídas aos e-mails (demanda do F9).</summary>
+        protected virtual async Task<List<OpenIssueDemand>> OpenIssuesForEmailsAsync(IReadOnlyCollection<string> emails)
+        {
+            return await _db.Issues.AsNoTracking()
+                .Where(i => !i.Done && i.AssigneeEmail != null && emails.Contains(i.AssigneeEmail))
+                .Select(i => new OpenIssueDemand(i.AssigneeEmail, i.EstimateHours, i.SpentHours, i.Done))
+                .ToListAsync();
+        }
 
-        /// <summary>Worklogs do mês lançados pelos e-mails (utilização do F9). Alimentado pelo Jira (T17).</summary>
-        protected virtual Task<List<MonthWorklog>> WorklogsForEmailsAsync(IReadOnlyCollection<string> emails, int year, int month) =>
-            Task.FromResult(new List<MonthWorklog>());
+        /// <summary>Worklogs do mês lançados pelos e-mails (utilização do F9).</summary>
+        protected virtual async Task<List<MonthWorklog>> WorklogsForEmailsAsync(IReadOnlyCollection<string> emails, int year, int month)
+        {
+            var inicio = new DateOnly(year, month, 1);
+            var fim = inicio.AddMonths(1);
+            return await _db.Worklogs.AsNoTracking()
+                .Where(w => w.AuthorEmail != null && emails.Contains(w.AuthorEmail) && w.Date >= inicio && w.Date < fim)
+                .Select(w => new MonthWorklog(w.AuthorEmail, w.Date, w.Hours))
+                .ToListAsync();
+        }
 
         /// <summary>
         /// Custo/hora por e-mail dos membros das equipes (D13). Se o mesmo e-mail estiver em mais de uma

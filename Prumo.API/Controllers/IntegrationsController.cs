@@ -13,10 +13,12 @@ namespace Prumo.API.Controllers
     public class IntegrationsController : ControllerBase
     {
         private readonly IIntegrationService _service;
+        private readonly IIntegrationSyncService _sync;
 
-        public IntegrationsController(IIntegrationService service)
+        public IntegrationsController(IIntegrationService service, IIntegrationSyncService sync)
         {
             _service = service;
+            _sync = sync;
         }
 
         /// <summary>Configuração atual — nunca devolve o token.</summary>
@@ -37,6 +39,13 @@ namespace Prumo.API.Controllers
         public async Task<ActionResult<IntegracaoJiraDto>> Test()
         {
             return Ok(await _service.TestJiraAsync());
+        }
+
+        /// <summary>UC16: dispara a sincronização em segundo plano (202).</summary>
+        [HttpPost("sincronizar")]
+        public async Task<ActionResult<IntegracaoJiraDto>> Sync()
+        {
+            return Accepted(await _sync.RequestJiraSyncAsync());
         }
 
         [HttpGet("logs")]

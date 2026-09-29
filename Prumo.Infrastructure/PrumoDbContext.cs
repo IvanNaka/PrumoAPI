@@ -32,6 +32,10 @@ namespace Plantonize.Plantao.Infrastructure
         public DbSet<IntegrationSyncLog> IntegrationSyncLogs => Set<IntegrationSyncLog>();
         public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
         public DbSet<ProjectEvaluation> ProjectEvaluations => Set<ProjectEvaluation>();
+        public DbSet<ExternalIssue> Issues => Set<ExternalIssue>();
+        public DbSet<ExternalWorklog> Worklogs => Set<ExternalWorklog>();
+
+        public void DiscardChanges() => ChangeTracker.Clear();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -30,7 +30,12 @@ namespace Prumo.Application.Interfaces
         DbSet<Integration> Integrations { get; }
         DbSet<IntegrationSyncLog> IntegrationSyncLogs { get; }
         DbSet<ProjectEvaluation> ProjectEvaluations { get; }
+        DbSet<ExternalIssue> Issues { get; }
+        DbSet<ExternalWorklog> Worklogs { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+        /// <summary>Descarta as alterações pendentes (ChangeTracker.Clear).</summary>
+        void DiscardChanges();
     }
 }

@@ -45,13 +45,18 @@ namespace Prumo.API.Extensions
             services.AddScoped<IRoleService, RoleService>();
             services.AddScoped<IIntegrationService, IntegrationService>();
             services.AddScoped<IIntegrationProviderFactory, IntegrationProviderFactory>();
+            services.AddScoped<IIntegrationSyncService, IntegrationSyncService>();
+            services.AddSingleton<Prumo.API.BackgroundServices.SyncTrigger>();
+            services.AddSingleton<ISyncTrigger>(sp => sp.GetRequiredService<Prumo.API.BackgroundServices.SyncTrigger>());
+            services.AddSingleton<IAdminNotifier, Prumo.API.BackgroundServices.LoggingAdminNotifier>();
+            services.AddHostedService<Prumo.API.BackgroundServices.ScheduledSyncService>();
 
             // Generic repository registration
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
             // Integration providers: one IIntegrationProvider per external tool (RF47-RF50),
             // resolved at runtime by IIntegrationProviderFactory based on Integration.Type.
-            services.AddHttpClient<IIntegrationProvider, JiraIntegrationProvider>();
+            services.AddHttpClient<IIntegrationProvider, JiraIntegrationProvider>(c => c.Timeout = TimeSpan.FromSeconds(60));
 
             // Token do Jira criptografado com ASP.NET Data Protection; chaves guardadas no banco.
             services.AddDataProtection().SetApplicationName("Prumo");
