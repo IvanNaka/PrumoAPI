@@ -164,12 +164,14 @@ Enums gravados como inteiro no banco: `Alert.Type`, `Integration.Type`. Os demai
 | Senha (`PasswordHash`, `PasswordHasher`, senha em `CreateUserDto`) | back | **Remover** (D01) |
 | Perfil `ScrumMaster` | `RoleName` | **Remover** (D02); usuários migrados para `TechLead` (ver dúvidas) |
 | Cadastro automático de usuário no 1º login Google | `AuthService` | **Remover** (RN03) |
-| Código de convite de equipe (`Team.InviteCode`, `POST /teams/join`) e guarda "precisa ter time" | back + front | **Esconder** da interface (T23); a regra de acesso passa a ser a de membro do portfólio (D11) |
-| Capacidade manual (`TeamCapacityEntry`, `/api/TeamCapacities`) | back + front | **Remover**: substituída pelo cálculo F9 |
-| Dados externos brutos (`ExternalData`) | back | **Remover**: substituído por `ExternalIssue`/`ExternalWorklog` |
+| Código de convite de equipe (`Team.InviteCode`, `POST /teams/join`) e guarda "precisa ter time" | back + front | **Removido** em T02/T15: a guarda saiu em T02 e o convite saiu com o novo modelo de equipes (membros por e-mail, RF30); o acesso segue a regra de membro do portfólio (D11) |
+| Capacidade manual (`TeamCapacityEntry`, `/api/TeamCapacities`) | back + front | **Removido** em T15: substituída pelo cálculo F9 |
+| Dados externos brutos (`ExternalData`) | back | **Removido** em T16: substituído por `ExternalIssue`/`ExternalWorklog` (T17) |
 | `CriteriaValue`, `ProjectMember` | Domain | `CriteriaValue` removida (sem uso); `ProjectMember` mantida sem API (ver dúvidas) |
-| Azure Functions (`Prumo.Functions`) para sincronização | back | **Remover**: substituída pelo `BackgroundService` exigido em T17 (evita sincronização em dobro) |
-| Tela "Configurações" (placeholder) | front | **Esconder** (sem RF) |
+| Azure Functions (`Prumo.Functions`) para sincronização | back | **Removido** em T16: substituída pelo `BackgroundService` de T17 (evita sincronização em dobro) |
+| Tela "Configurações" (placeholder) | front | **Escondida** (sem RF): componente mantido, sem rota nem item de menu |
+| `GET /api/Roles` (lista fixa de perfis) | back | **Mantido** sem tela: só leitura dos valores do enum, não expõe nada além da Seção 3.1 |
+| Roadmap na API (`/api/Roadmaps`) | back | **Mantido** sem tela (D08); ver dúvidas sobre o controle de acesso |
 | Pacote `recharts` | front | Biblioteca React, inutilizável em Angular → removida; instalados `chart.js` + `ng2-charts` (T19) |
 
 ## Progresso das tarefas
@@ -198,7 +200,7 @@ Enums gravados como inteiro no banco: `Alert.Type`, `Integration.Type`. Os demai
 | T20 | CONCLUÍDA | Aba Indicadores em /projetos/{id} (saúde com flags F12, progresso e atrasadas das issues, lead time F7 e qualidade F8, de GET /projetos/{id}/indicadores). As demais abas (Resumo com status/ações/score/ranking, Avaliação, OKRs, Dependências, Orçamento, Business case) já existiam desde T08–T14. |
 | T21 | CONCLUÍDA | Alert (Notificacao) com UsuarioId, EntidadeTipo/Id, Status (Figura 30) e datas de envio/leitura/arquivamento (migration T21_Notificacoes). NotificationService (deduplicação 24 h, Gerada→Enfileirada, Channel), NotificationDispatcher (→Enviada), NotificationRulesService com as 7 regras (job diário 07:00 + depois de cada sincronização do Jira), expiração 7/30 dias, RN26 para Administradores. /notificacoes, /nao-lidas/contagem, PATCH lida/arquivar. Front: sino com contagem (60 s) e central /notificacoes com filtros, ícones, links e ações. |
 | T22 | CONCLUÍDA | QuestPDF (licença Community no Program.cs) e ClosedXML. GET /portfolios/{id}/relatorios/{portfolio\|executivo}?formato=pdf\|excel (policy Relatorios + acesso ao portfólio) e /historico; entidade Report (Relatorio, migration T22_Relatorios) gravada a cada geração; nome prumo-{tipo}-{portfolio}-{yyyyMMdd}. Excel: aba Resumo + uma aba por seção. Tela /portfolios/{id}/relatorios com 2 cartões (PDF/Excel via blob) e histórico. |
-| T23 | PENDENTE | |
+| T23 | CONCLUÍDA | Tabela de itens EXTRA atualizada com a decisão final de cada um: Roadmap escondido (sem rota/menu, D08), senha/ScrumMaster/cadastro automático removidos (T01/T02), convite e capacidade manual removidos (T15), ExternalData e Prumo.Functions removidos (T16), Configurações escondida, recharts removido (T19). Menu lateral ganhou o item Notificações. |
 | T24 | PENDENTE | |
 | T25 | PENDENTE | |
 | T26 | PENDENTE | |
@@ -232,3 +234,4 @@ Enums gravados como inteiro no banco: `Alert.Type`, `Integration.Type`. Os demai
 - **Arquivar a partir de Enviada (T21):** a Figura 30 só permite arquivar notificações Lidas ou Ignoradas; a central mostra 'Arquivar' só nesses estados e a API devolve 409 (RN22) para Enviada. Ignorada é arquivada 30 dias depois do envio.
 - **Horário do job diário (T21):** 07:00 no fuso horário do servidor da API.
 - **'Alertas abertos' no relatório executivo (T22):** interpretados como as notificações não arquivadas ligadas a projetos, dependências e equipes do portfólio, uma linha por mensagem (mesmo que tenha ido para vários usuários).
+- **API de Roadmap (T23):** as rotas `/api/Roadmaps` continuam no back-end (D08: código mantido, sem acesso pela interface), exigindo só autenticação. Se a equipe decidir manter o recurso, elas precisam da mesma checagem de membro do portfólio (RN06) das demais; se não, podem ser removidas.
