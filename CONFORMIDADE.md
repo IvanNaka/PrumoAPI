@@ -204,7 +204,82 @@ Enums gravados como inteiro no banco: `Alert.Type`, `Integration.Type`. Os demai
 | T24 | CONCLUÍDA | Padrão recomendado (D09): AzureDevOpsProvider, GitHubProvider e TrelloProvider implementam IIntegrationProvider e lançam NotSupportedException("Integração planejada para versão futura."); registrados no DI e resolvidos pela IntegrationProviderFactory, sem tela. RF48–RF50 = FUTURO. |
 | T25 | CONCLUÍDA | SeedValidacao (PRUMO_SEED_VALIDACAO=true, idempotente): 7 usuários (e-mails configuráveis; validacao com vários perfis), 2 portfólios com todos como membros, 4 critérios cada, 12 projetos (Run/Grow/Transform; EmRisco, Suspenso, vencido sem conclusão, estouro de orçamento, 1 sem OKR), notas completas em 10, 3 OKRs × 2 KRs, lançamentos em todos, 5 business cases e retornos em 4, 3 dependências (1 em risco), 2 equipes × 3 membros (Squad Digital a 135%), issues/worklogs Origem=Seed dos 4 tipos; ranking calculado e notificações dos 5 tipos geradas. Verificado no Postgres local com capturas do dashboard, notificações e relatório PDF. Ajustes: rótulos em português e títulos sem quebra no PDF, gráficos em pt-BR, alinhamento das mensagens na central. |
 | T26 | CONCLUÍDA | Prumo.Tests/Formulas/CasosObrigatoriosTests.cs com os 11 casos do plano (F1 80,00; F2 empate por prioridade; F4 75%; F5 10.000/30%/90.000; F6 182,24; F7 mediana 7/média 9; F8 0,25/80%; F9 125%; F12 50 Atenção; F14; válida + inválida nas 5 máquinas de estado). Suíte total: 165 testes (fórmulas, indicadores, API, integração Jira, seed). |
-| T27 | PENDENTE | |
+| T27 | CONCLUÍDA | Matriz da Seção 5 preenchida: RF01–RF47 e RF51 = OK; RF48–RF50 = FUTURO (D09); UC1–UC16 = OK. Roteiro do Cap. 4 (4.4.1 a 4.4.3) executado de ponta a ponta no navegador (Playwright) com validacao@prumo sobre o seed (Postgres local): 19 passos — criar e selecionar portfólio, 4 critérios com pesos, OKR e associação ao portfólio, 3 projetos com responsável/orçamento/categoria, associação aos OKRs, dependência, avaliação, priorização e ranking (Alfa 90,91 = F1 à mão), abas Indicadores/Dependências/Orçamento/Avaliação, relatório do portfólio (PDF), tela do Jira, dashboard com os 8 indicadores e gráficos, relatório executivo (PDF e Excel). Nenhum passo falhou na aplicação. Limitações do ambiente: o login Google foi substituído por um JWT emitido com a chave local (o GSI exige conta Google real) e a sincronização com Jira Cloud não pôde ser executada (sem instância acessível) — ela está coberta pelos testes automatizados com provider falso e HTTP simulado (JiraSyncTests, JiraProviderTests). |
+
+## 5. Matriz de rastreabilidade RF → implementação
+Rotas da API com o prefixo `/api`. Telas do front-end Angular.
+
+| RF | Resumo | Tarefa(s) | Endpoint | Tela | Status |
+|---|---|---|---|---|---|
+| RF01 | Login com provedor externo | T02 | POST /auth/google, GET /auth/me | /login | OK |
+| RF02 | Permissões por perfil | T03 | (todos: 13 policies + RN06/RN23) | `roleGuard`, `*temPerfil`, menu por perfil | OK |
+| RF03 | CRUD e ativação de usuários | T04 | GET/POST/PUT /usuarios, PATCH /usuarios/{id}/ativo | /admin/usuarios | OK |
+| RF04 | Criar portfólio (nome, descrição, responsável) | T05 | POST /portfolios | /portfolios (Novo portfólio) | OK |
+| RF05 | Ver portfólios disponíveis | T05 | GET /portfolios (D11) | /portfolios | OK |
+| RF06 | Selecionar portfólio | T06 | GET /portfolios/{id} | cabeçalho (portfólio ativo) + /portfolios/{id}/visao-geral | OK |
+| RF07 | Cadastrar critério (nome, descrição, peso) | T07 | POST /portfolios/{id}/criterios | /portfolios/{id}/criterios | OK |
+| RF08 | Editar critério | T07 | PUT /criterios/{id} | /portfolios/{id}/criterios | OK |
+| RF09 | Excluir critério | T07 | DELETE /criterios/{id} | /portfolios/{id}/criterios | OK |
+| RF10 | Cadastrar projeto | T08 | POST /portfolios/{id}/projetos | /portfolios/{id}/projetos (Novo projeto) | OK |
+| RF11 | Editar projeto | T08 | PUT /projetos/{id} | /projetos/{id} (Editar) | OK |
+| RF12 | Associar projeto a portfólio | T08 | PortfolioId obrigatório na rota de criação | formulário do projeto | OK |
+| RF13 | Alterar status (concluído/suspenso/cancelado) | T08 | POST /projetos/{id}/status | /projetos/{id} (botões por status) | OK |
+| RF14 | Cadastrar OKR | T10 | POST /okrs | /okrs | OK |
+| RF15 | Cadastrar Key Results | T10 | POST /okrs, PUT /okrs/{id}, PUT /key-results/{id} | /okrs | OK |
+| RF16 | Associar projeto a OKR | T11 | POST/DELETE /projetos/{id}/okrs/{okrId} (e /portfolios/{id}/okrs/{okrId}) | aba OKRs do projeto; visão geral do portfólio | OK |
+| RF17 | Progresso dos OKRs | T10 | GET /okrs (F4) | /okrs | OK |
+| RF18 | Avaliar projetos pelos critérios | T09 | PUT /projetos/{id}/avaliacoes | /portfolios/{id}/priorizacao (Avaliar) | OK |
+| RF19 | Calcular score | T09 | POST /portfolios/{id}/priorizacao (F1) | /portfolios/{id}/priorizacao | OK |
+| RF20 | Gerar ranking | T09 | POST /portfolios/{id}/priorizacao, GET /portfolios/{id}/ranking (F2) | /portfolios/{id}/priorizacao (Ranking) | OK |
+| RF21 | Recalcular ranking automaticamente | T07, T09 | F3 (`RecalculateIfNeededAsync` após nota, peso/tipo e status) | — | OK |
+| RF22 | Orçamento aprovado | T08 | campo `orcamentoAprovado` (POST/PUT de projeto) | formulário do projeto | OK |
+| RF23 | Registrar custos e despesas | T12 | GET/POST /projetos/{id}/lancamentos, DELETE /lancamentos/{id} | aba Orçamento | OK |
+| RF24 | Calcular Burn Rate | T12, T18 | GET /projetos/{id}/indicadores (F5) | aba Orçamento | OK |
+| RF25 | VPL esperado e realizado | T13, T18 | GET/PUT /projetos/{id}/business-case, GET/POST /projetos/{id}/retornos (F6) | aba Business case | OK |
+| RF26 | Cadastrar dependências | T14 | POST /dependencias, DELETE /dependencias/{id} | /portfolios/{id}/dependencias; aba Dependências | OK |
+| RF27 | Visualizar dependências | T14 | GET /portfolios/{id}/dependencias | /portfolios/{id}/dependencias | OK |
+| RF28 | Identificar dependências de risco | T14 | F13 (`emRisco`, `motivo`) | badge "Em risco" | OK |
+| RF29 | Cadastrar equipes | T15 | GET/POST/PUT/DELETE /equipes | /equipes | OK |
+| RF30 | Cadastrar colaboradores | T15 | /equipes/{id}/membros | /equipes | OK |
+| RF31 | Capacidade mensal dos colaboradores | T15 | campo `capacidadeMensalHoras` do membro | /equipes | OK |
+| RF32 | Calcular ocupação e utilização | T15 | GET /equipes/{id}/capacidade?mes= (F9) | /equipes/{id}/capacidade | OK |
+| RF33 | Acompanhar métricas de qualidade | T18, T19 | GET /portfolios/{id}/dashboard, /portfolios/{id}/indicadores/qualidade, /projetos/{id}/indicadores | dashboard; aba Indicadores | OK |
+| RF34 | Indicador Bugs × Features | T18 | F8 (`razaoBugsPorEntrega`, `porTipo`) | dashboard | OK |
+| RF35 | Dashboard de saúde do portfólio | T18, T19 | F12 (`saude`) | dashboard | OK |
+| RF36 | Burn Rate no dashboard | T19 | GET /portfolios/{id}/dashboard (`burnRate`) | dashboard | OK |
+| RF37 | Alocação Run/Grow/Transform | T18, T19 | F10 (`alocacaoEstrategica`) | dashboard | OK |
+| RF38 | Qualidade da entrega | T19 | GET /portfolios/{id}/dashboard (`qualidade`) | dashboard | OK |
+| RF39 | Capacidade e ocupação | T19 | GET /portfolios/{id}/dashboard (`capacidade`) | dashboard | OK |
+| RF40 | Lead Time | T18, T19 | F7 (`leadTime`) | dashboard; aba Indicadores | OK |
+| RF41 | VPL esperado × realizado | T19 | GET /portfolios/{id}/dashboard (`vpl`) | dashboard | OK |
+| RF42 | Alinhamento a OKRs | T18, T19 | F11 (`alinhamentoOkr`) | dashboard | OK |
+| RF43 | Gerar relatórios | T22 | GET /portfolios/{id}/relatorios/{portfolio\|executivo}, /historico | /portfolios/{id}/relatorios | OK |
+| RF44 | Exportar PDF e Excel | T22 | ?formato=pdf\|excel | /portfolios/{id}/relatorios | OK |
+| RF45 | Notificações automáticas | T21 | `NotificationRulesService` (job 07:00 e após cada sincronização) | sino no cabeçalho | OK |
+| RF46 | Central de notificações | T21 | GET /notificacoes, GET /notificacoes/nao-lidas/contagem, PATCH /notificacoes/{id}/lida\|arquivar | /notificacoes | OK |
+| RF47 | Integração Jira | T16, T17 | GET/PUT /integracoes/jira, POST /testar, POST /sincronizar, GET /logs | /integracoes/jira | OK |
+| RF48 | Integração Azure DevOps | T24 | — (`AzureDevOpsProvider` só com o contrato) | — | FUTURO (D09) |
+| RF49 | Integração GitHub | T24 | — (`GitHubProvider` só com o contrato) | — | FUTURO (D09) |
+| RF50 | Integração Trello | T24 | — (`TrelloProvider` só com o contrato) | — | FUTURO (D09) |
+| RF51 | Sincronização agendada configurável | T17 | `ScheduledSyncService` (BackgroundService, 1 min) | campo "Intervalo de sincronização" | OK |
+
+### Casos de uso → tarefa
+| UC | Nome | Tarefa | Status |
+|---|---|---|---|
+| UC1 | Autenticar usuário | T02 | OK |
+| UC2 | Cadastrar portfólio | T05 | OK |
+| UC3 | Selecionar portfólio | T06 | OK |
+| UC4–UC6 | Cadastrar/editar/excluir critério | T07 | OK |
+| UC7 | Cadastrar projeto | T08 | OK |
+| UC8 | Definir OKRs | T10 | OK |
+| UC9 | Associar projeto a OKR | T11 | OK |
+| UC10 | Priorizar projetos | T09 | OK |
+| UC11 | Visualizar dashboard | T19 | OK |
+| UC12 | Gerenciar dependências | T14 | OK |
+| UC13 | Gerenciar capacidade da equipe | T15 | OK |
+| UC14 | Métricas de qualidade | T18, T19 | OK |
+| UC15 | Configurar integração Jira | T16 | OK |
+| UC16 | Sincronizar dados do Jira | T17 | OK |
 
 ## Dúvidas em aberto
 - **ScrumMaster (T01):** o perfil não existe no documento (D02). Na migration `T01_Enums` os usuários com esse perfil foram migrados para **TechLead** (perfil mais próximo: ambos podiam gerir equipes). Confirmar com a equipe.
