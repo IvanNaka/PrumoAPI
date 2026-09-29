@@ -1,137 +1,48 @@
 using Microsoft.AspNetCore.Authorization;
-using Prumo.API.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Prumo.API.Authorization;
 using Prumo.Application.DTOs.Integration;
-using Prumo.Application.Exceptions;
 using Prumo.Application.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 
 namespace Prumo.API.Controllers
 {
-    /// <summary>
-    /// UC15 "Configurar Integração" / UC16 "Sincronizar Dados": endpoints to configure and sync
-    /// external tool integrations (Jira, Azure DevOps, GitHub, Trello - RF47/RF48/RF49/RF50).
-    /// </summary>
+    // Integração Jira (RF47, RF51, UC15, UC16).
     [ApiController]
     [Authorize(Policy = Policies.Integracoes)]
-    [Route("api/[controller]")]
+    [Route("api/integracoes/jira")]
     public class IntegrationsController : ControllerBase
     {
-        private readonly IIntegrationService _integrationService;
+        private readonly IIntegrationService _service;
 
-        public IntegrationsController(IIntegrationService integrationService)
+        public IntegrationsController(IIntegrationService service)
         {
-            _integrationService = integrationService;
+            _service = service;
         }
 
+        /// <summary>Configuração atual — nunca devolve o token.</summary>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<IntegrationDto>>> GetAll()
+        public async Task<ActionResult<IntegracaoJiraDto>> Get()
         {
-            var integrations = await _integrationService.GetAllAsync();
-            return Ok(integrations);
+            return Ok(await _service.GetJiraAsync());
         }
 
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<IntegrationDto>> GetById(Guid id)
+        /// <summary>Salva a configuração e testa a conexão automaticamente.</summary>
+        [HttpPut]
+        public async Task<ActionResult<IntegracaoJiraDto>> Save([FromBody] SalvarIntegracaoJiraDto dto)
         {
-            var integration = await _integrationService.GetByIdAsync(id);
-            if (integration == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(integration);
+            return Ok(await _service.SaveJiraAsync(dto));
         }
 
-        [HttpPost]
-        public async Task<ActionResult<IntegrationDto>> Configure([FromBody] ConfigureIntegrationDto dto)
+        [HttpPost("testar")]
+        public async Task<ActionResult<IntegracaoJiraDto>> Test()
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.ApiUrl) || string.IsNullOrWhiteSpace(dto.Token))
-            {
-                return BadRequest("Invalid payload.");
-            }
-
-            try
-            {
-                var integration = await _integrationService.ConfigureAsync(dto);
-                return CreatedAtAction(nameof(GetById), new { id = integration.Id }, integration);
-            }
-            catch (IntegrationAuthenticationException ex)
-            {
-                // 422, not 401: these are the *external* integration's credentials, not the
-                // caller's own session/JWT. Returning 401 here would collide with the front-end's
-                // auth interceptor and incorrectly log the user out of the application.
-                return UnprocessableEntity(ex.Message);
-            }
-            catch (NotSupportedException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(await _service.TestJiraAsync());
         }
 
-        [HttpPut("{id:guid}")]
-        public async Task<ActionResult<IntegrationDto>> Update(Guid id, [FromBody] UpdateIntegrationDto dto)
+        [HttpGet("logs")]
+        public async Task<ActionResult<IEnumerable<SincronizacaoLogDto>>> Logs()
         {
-            if (dto == null)
-            {
-                return BadRequest("Invalid payload.");
-            }
-
-            var updated = await _integrationService.UpdateAsync(id, dto);
-            if (updated == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(updated);
-        }
-
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
-        {
-            var existing = await _integrationService.GetByIdAsync(id);
-            if (existing == null)
-            {
-                return NotFound();
-            }
-
-            await _integrationService.DeleteAsync(id);
-            return NoContent();
-        }
-
-        /// <summary>
-        /// UC16 "Sincronizar Dados": manually triggers a sync for the given integration. The same
-        /// operation also runs automatically per <see cref="IntegrationDto.SyncIntervalMinutes"/> (RF51).
-        /// </summary>
-        [HttpPost("{id:guid}/sync")]
-        public async Task<ActionResult<IntegrationSyncResultDto>> Sync(Guid id)
-        {
-            try
-            {
-                var result = await _integrationService.SyncAsync(id);
-                return Ok(result);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (IntegrationAuthenticationException ex)
-            {
-                // 422, not 401: these are the *external* integration's credentials, not the
-                // caller's own session/JWT. Returning 401 here would collide with the front-end's
-                // auth interceptor and incorrectly log the user out of the application.
-                return UnprocessableEntity(ex.Message);
-            }
-            catch (IntegrationUnavailableException ex)
-            {
-                return StatusCode(StatusCodes.Status502BadGateway, ex.Message);
-            }
-            catch (NotSupportedException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(await _service.GetJiraLogsAsync());
         }
     }
 }

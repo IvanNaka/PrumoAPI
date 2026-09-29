@@ -28,6 +28,9 @@ namespace Plantonize.Plantao.Infrastructure
         public DbSet<ProjectDependency> ProjectDependencies => Set<ProjectDependency>();
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<TeamUser> TeamUsers => Set<TeamUser>();
+        public DbSet<Integration> Integrations => Set<Integration>();
+        public DbSet<IntegrationSyncLog> IntegrationSyncLogs => Set<IntegrationSyncLog>();
+        public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
         public DbSet<ProjectEvaluation> ProjectEvaluations => Set<ProjectEvaluation>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

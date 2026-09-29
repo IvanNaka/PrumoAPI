@@ -1,7 +1,5 @@
 using Prumo.Application.Interfaces;
 using Prumo.Domain.Enums;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace Prumo.Application.Services
 {
@@ -14,7 +12,7 @@ namespace Prumo.Application.Services
             _providers = providers.ToDictionary(p => p.Type);
         }
 
-        public IIntegrationProvider GetProvider(IntegrationType type)
+        public IIntegrationProvider? GetProvider(IntegrationType type)
         {
             return _providers.TryGetValue(type, out var provider) ? provider : null;
         }

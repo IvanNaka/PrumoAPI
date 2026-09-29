@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Plantonize.Plantao.Infrastructure;
 using Prumo.API;
+using Prumo.Application.DTOs.Integration;
 using Prumo.Application.Interfaces;
 using Prumo.Domain.Entities;
 using Prumo.Domain.Enums;
@@ -57,6 +58,14 @@ namespace Prumo.Tests.Api
 
                 services.AddDbContext<PrumoDbContext>(o => o.UseInMemoryDatabase(_databaseName));
                 services.AddSingleton<IGoogleTokenValidator, FakeGoogleValidator>();
+
+                // Jira falso: o token "token-valido" é aceito; qualquer outro é recusado.
+                foreach (var descriptor in services.Where(d => d.ServiceType == typeof(IIntegrationProvider)).ToList())
+                {
+                    services.Remove(descriptor);
+                }
+                services.AddSingleton<FakeJiraProvider>();
+                services.AddSingleton<IIntegrationProvider>(sp => sp.GetRequiredService<FakeJiraProvider>());
             });
         }
 
@@ -111,6 +120,19 @@ namespace Prumo.Tests.Api
             var token = new JwtSecurityToken("prumo-api", "prumo-web", claims, expires: DateTime.UtcNow.AddHours(1),
                 signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256));
             return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
+        public class FakeJiraProvider : IIntegrationProvider
+        {
+            public const string TokenValido = "token-valido";
+            public IntegrationType Type => IntegrationType.Jira;
+            public List<IntegrationCredentials> Testes { get; } = new();
+
+            public Task<bool> TestConnectionAsync(IntegrationCredentials credentials, CancellationToken cancellationToken = default)
+            {
+                Testes.Add(credentials);
+                return Task.FromResult(credentials.ApiToken == TokenValido);
+            }
         }
 
         private class FakeGoogleValidator : IGoogleTokenValidator

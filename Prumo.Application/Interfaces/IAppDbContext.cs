@@ -27,6 +27,8 @@ namespace Prumo.Application.Interfaces
         DbSet<ProjectDependency> ProjectDependencies { get; }
         DbSet<Team> Teams { get; }
         DbSet<TeamUser> TeamUsers { get; }
+        DbSet<Integration> Integrations { get; }
+        DbSet<IntegrationSyncLog> IntegrationSyncLogs { get; }
         DbSet<ProjectEvaluation> ProjectEvaluations { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

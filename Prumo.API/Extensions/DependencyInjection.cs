@@ -3,6 +3,10 @@ using Plantonize.Plantao.Infrastructure.Repositories;
 using Prumo.Application.Interfaces;
 using Prumo.Application.Services;
 using Prumo.Domain.Interfaces;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.DataProtection.KeyManagement;
+using Microsoft.Extensions.Options;
+using Prumo.API.Security;
 using Prumo.Infrastructure.Integrations;
 
 namespace Prumo.API.Extensions
@@ -49,8 +53,12 @@ namespace Prumo.API.Extensions
             // resolved at runtime by IIntegrationProviderFactory based on Integration.Type.
             services.AddHttpClient<IIntegrationProvider, JiraIntegrationProvider>();
 
-            // RF51 automatic sync is handled by the Prumo.Functions Azure Functions project
-            // (daily timer trigger + queue trigger), not by an in-process background service.
+            // Token do Jira criptografado com ASP.NET Data Protection; chaves guardadas no banco.
+            services.AddDataProtection().SetApplicationName("Prumo");
+            services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(sp =>
+                new ConfigureOptions<KeyManagementOptions>(o =>
+                    o.XmlRepository = new DbXmlRepository(sp.GetRequiredService<IServiceScopeFactory>())));
+            services.AddSingleton<ISecretProtector, DataProtectionSecretProtector>();
 
             return services;
         }
