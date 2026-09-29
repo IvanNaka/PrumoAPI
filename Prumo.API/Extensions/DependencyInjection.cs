@@ -82,6 +82,11 @@ namespace Prumo.API.Extensions
             // resolved at runtime by IIntegrationProviderFactory based on Integration.Type.
             services.AddHttpClient<IIntegrationProvider, JiraIntegrationProvider>(c => c.Timeout = TimeSpan.FromSeconds(60));
 
+            // RF48–RF50 (D09): só o contrato; lançam NotSupportedException e não aparecem na interface.
+            services.AddSingleton<IIntegrationProvider, AzureDevOpsProvider>();
+            services.AddSingleton<IIntegrationProvider, GitHubProvider>();
+            services.AddSingleton<IIntegrationProvider, TrelloProvider>();
+
             // Token do Jira criptografado com ASP.NET Data Protection; chaves guardadas no banco.
             services.AddDataProtection().SetApplicationName("Prumo");
             services.AddSingleton<IConfigureOptions<KeyManagementOptions>>(sp =>
