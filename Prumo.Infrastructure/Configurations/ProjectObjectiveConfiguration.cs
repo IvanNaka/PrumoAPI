@@ -17,8 +17,17 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(po => po.ProjectId).HasColumnType("uuid").IsRequired();
             builder.Property(po => po.ObjectiveId).HasColumnType("uuid").IsRequired();
 
-            builder.HasIndex(po => po.ProjectId);
             builder.HasIndex(po => po.ObjectiveId);
+
+            builder.HasOne(po => po.Project)
+                .WithMany(p => p.ProjectObjectives)
+                .HasForeignKey(po => po.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(po => po.Objective)
+                .WithMany(o => o.Projects)
+                .HasForeignKey(po => po.ObjectiveId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

@@ -34,6 +34,7 @@ namespace Prumo.API.Extensions
             services.AddScoped<IPortfolioService, PortfolioService>();
             services.AddScoped<IPriorityCriteriaService, PriorityCriteriaService>();
             services.AddScoped<IPrioritizationService, PrioritizationService>();
+            services.AddScoped<IOkrService, OkrService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProjectDependencyService, ProjectDependencyService>();
             services.AddScoped<ITeamService, TeamService>();

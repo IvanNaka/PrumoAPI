@@ -18,6 +18,8 @@ namespace Plantonize.Plantao.Infrastructure
         public DbSet<Project> Projects => Set<Project>();
         public DbSet<PriorityCriteria> PriorityCriterias => Set<PriorityCriteria>();
         public DbSet<Objective> Objectives => Set<Objective>();
+        public DbSet<KeyResult> KeyResults => Set<KeyResult>();
+        public DbSet<ProjectObjective> ProjectObjectives => Set<ProjectObjective>();
         public DbSet<ProjectEvaluation> ProjectEvaluations => Set<ProjectEvaluation>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
