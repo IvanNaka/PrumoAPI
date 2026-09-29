@@ -39,6 +39,36 @@ namespace Prumo.Application.Indicators
                     hoje));
         }
 
+        /// <summary>F6 para cada projeto, usando o custo realizado do F5.</summary>
+        public async Task<Dictionary<Guid, VplResult>> VplsAsync(IReadOnlyCollection<Project> projects, IReadOnlyDictionary<Guid, BurnRateResult> burnRates)
+        {
+            var ids = projects.Select(p => p.Id).ToList();
+            var cases = await _db.BusinessCases.AsNoTracking()
+                .Include(b => b.Flows)
+                .Where(b => ids.Contains(b.ProjectId))
+                .ToDictionaryAsync(b => b.ProjectId);
+            var returns = (await _db.RealizedReturns.AsNoTracking()
+                    .Where(r => ids.Contains(r.ProjectId))
+                    .Select(r => new { r.ProjectId, r.Date, r.Value })
+                    .ToListAsync())
+                .ToLookup(r => r.ProjectId, r => new RealizedReturnValue(r.Date, r.Value));
+
+            return projects.ToDictionary(p => p.Id, p =>
+            {
+                cases.TryGetValue(p.Id, out var bc);
+                return VplCalculator.Calcular(
+                    p.Id,
+                    p.Name,
+                    bc != null,
+                    bc?.InitialInvestment ?? 0,
+                    bc?.AnnualDiscountRate ?? 0,
+                    bc?.Flows.Select(f => new CashFlow(f.Month, f.Value)) ?? Enumerable.Empty<CashFlow>(),
+                    burnRates.TryGetValue(p.Id, out var burn) ? burn.CustoRealizado : 0,
+                    p.StartDate,
+                    returns[p.Id]);
+            });
+        }
+
         /// <summary>Worklogs de cada projeto (horas e e-mail do autor). Alimentado pela integração Jira (T17).</summary>
         protected virtual Task<Dictionary<Guid, List<WorklogHours>>> WorklogHoursAsync(IReadOnlyCollection<Guid> projectIds) =>
             Task.FromResult(new Dictionary<Guid, List<WorklogHours>>());

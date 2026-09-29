@@ -90,7 +90,17 @@ namespace Prumo.Tests.Api
             return client;
         }
 
-        public static string TokenFor(User user)
+        /// <summary>
+        /// JWT assinado com a mesma chave que a API está usando (variáveis de ambiente como Jwt__Key
+        /// têm precedência na configuração da API).
+        /// </summary>
+        public string TokenFor(User user)
+        {
+            var key = Services.GetRequiredService<IConfiguration>()["Jwt:Key"] ?? JwtKey;
+            return TokenFor(user, key);
+        }
+
+        public static string TokenFor(User user, string key)
         {
             var claims = new List<Claim>
             {
@@ -99,7 +109,7 @@ namespace Prumo.Tests.Api
             };
             claims.AddRange(user.Roles.Select(r => new Claim("role", r.Role.ToString())));
             var token = new JwtSecurityToken("prumo-api", "prumo-web", claims, expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtKey)), SecurityAlgorithms.HmacSha256));
+                signingCredentials: new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key)), SecurityAlgorithms.HmacSha256));
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 

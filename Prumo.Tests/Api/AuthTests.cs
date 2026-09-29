@@ -89,7 +89,7 @@ namespace Prumo.Tests.Api
         public async Task TokenAdulterado_Recebe401()
         {
             var user = await _factory.CreateUserAsync("adulterado@prumo.dev", true, RoleName.Desenvolvedor);
-            var token = ApiFactory.TokenFor(user);
+            var token = _factory.TokenFor(user);
             var tampered = token[..^4] + (token.EndsWith("AAAA") ? "BBBB" : "AAAA");
 
             var client = _factory.CreateClient();

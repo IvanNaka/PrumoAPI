@@ -164,5 +164,23 @@ namespace Prumo.Tests.Api
             Assert.Single(lista.EnumerateArray());
             Assert.Equal("Transform 1", lista[0].GetProperty("nome").GetString());
         }
+
+        [Fact]
+        public async Task EditarProjetoSemOrcamento_CriaOrcamento1para1()
+        {
+            var (gerente, portfolio, client) = await SetupAsync();
+            var project = new Project
+            {
+                Name = "Legado", PortfolioId = portfolio.Id, OwnerId = gerente.Id,
+                StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 6, 30),
+            };
+            await Factory.WithDbAsync(async db => { db.Projects.Add(project); await db.SaveChangesAsync(); });
+
+            var response = await client.PutAsJsonAsync($"/api/projetos/{project.Id}", NovoProjeto(gerente.Id, nome: "Legado"));
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var budget = await Factory.WithDbAsync(db => Task.FromResult(db.Budgets.Single(b => b.ProjectId == project.Id)));
+            Assert.Equal(100000m, budget.TotalAmount);
+        }
     }
 }

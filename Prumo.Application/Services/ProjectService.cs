@@ -176,8 +176,14 @@ namespace Prumo.Application.Services
             var priorityChanged = project.Priority != valid.Priority;
             Apply(project, valid);
             project.UpdatedDate = DateTime.UtcNow;
-            project.Budget ??= new Budget { ProjectId = project.Id };
-            project.Budget.TotalAmount = project.ApprovedBudget;
+            if (project.Budget == null)
+            {
+                _db.Budgets.Add(new Budget { ProjectId = project.Id, TotalAmount = project.ApprovedBudget });
+            }
+            else
+            {
+                project.Budget.TotalAmount = project.ApprovedBudget;
+            }
             await _db.SaveChangesAsync();
 
             if (priorityChanged)

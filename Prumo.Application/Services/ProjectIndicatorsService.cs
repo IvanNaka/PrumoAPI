@@ -25,8 +25,10 @@ namespace Prumo.Application.Services
             var project = await _db.Projects.AsNoTracking().SingleAsync(p => p.Id == projectId);
             var hoje = DateOnly.FromDateTime(DateTime.UtcNow);
 
-            var burnRates = await _loader.BurnRatesAsync(new[] { project }, hoje);
-            return new ProjetoIndicadoresDto { BurnRate = burnRates[projectId] };
+            var projects = new[] { project };
+            var burnRates = await _loader.BurnRatesAsync(projects, hoje);
+            var vpls = await _loader.VplsAsync(projects, burnRates);
+            return new ProjetoIndicadoresDto { BurnRate = burnRates[projectId], Vpl = vpls[projectId] };
         }
     }
 }

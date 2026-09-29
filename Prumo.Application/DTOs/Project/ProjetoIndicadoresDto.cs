@@ -6,5 +6,6 @@ namespace Prumo.Application.DTOs.Project
     public class ProjetoIndicadoresDto
     {
         public BurnRateResult BurnRate { get; set; } = new();
+        public VplResult Vpl { get; set; } = new();
     }
 }

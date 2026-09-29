@@ -45,6 +45,36 @@ namespace Prumo.API.Controllers
             return NoContent();
         }
 
+        [HttpGet("projetos/{id:guid}/business-case")]
+        [Authorize(Policy = Policies.VerFinanceiro)]
+        public async Task<ActionResult<BusinessCaseDto>> GetBusinessCase(Guid id)
+        {
+            return Ok(await _finance.GetBusinessCaseAsync(id));
+        }
+
+        /// <summary>Grava o business case; a lista de fluxos previstos é substituída inteira.</summary>
+        [HttpPut("projetos/{id:guid}/business-case")]
+        [Authorize(Policy = Policies.EditarFinanceiro)]
+        public async Task<ActionResult<BusinessCaseDto>> SaveBusinessCase(Guid id, [FromBody] SalvarBusinessCaseDto dto)
+        {
+            return Ok(await _finance.SaveBusinessCaseAsync(id, dto));
+        }
+
+        [HttpGet("projetos/{id:guid}/retornos")]
+        [Authorize(Policy = Policies.VerFinanceiro)]
+        public async Task<ActionResult<IEnumerable<RetornoDto>>> ListReturns(Guid id)
+        {
+            return Ok(await _finance.ListReturnsAsync(id));
+        }
+
+        [HttpPost("projetos/{id:guid}/retornos")]
+        [Authorize(Policy = Policies.EditarFinanceiro)]
+        public async Task<ActionResult<RetornoDto>> AddReturn(Guid id, [FromBody] SalvarRetornoDto dto)
+        {
+            var created = await _finance.AddReturnAsync(id, dto);
+            return Created($"/api/projetos/{id}/retornos", created);
+        }
+
         /// <summary>F5, F6, F7, F8 e F12 do projeto.</summary>
         [HttpGet("projetos/{id:guid}/indicadores")]
         public async Task<ActionResult<ProjetoIndicadoresDto>> Indicators(Guid id)
