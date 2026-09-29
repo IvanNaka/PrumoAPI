@@ -77,9 +77,9 @@ namespace Prumo.API.Controllers
 
         /// <summary>F5, F6, F7, F8 e F12 do projeto.</summary>
         [HttpGet("projetos/{id:guid}/indicadores")]
-        public async Task<ActionResult<ProjetoIndicadoresDto>> Indicators(Guid id)
+        public async Task<ActionResult<ProjetoIndicadoresDto>> Indicators(Guid id, [FromQuery] DateOnly? de, [FromQuery] DateOnly? ate)
         {
-            return Ok(await _indicators.GetAsync(id));
+            return Ok(await _indicators.GetAsync(id, de, ate));
         }
     }
 }

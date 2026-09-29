@@ -1,3 +1,4 @@
+using Prumo.Application.Indicators.Portfolio;
 using Plantonize.Plantao.Infrastructure;
 using Plantonize.Plantao.Infrastructure.Repositories;
 using Prumo.Application.Interfaces;
@@ -37,6 +38,16 @@ namespace Prumo.API.Extensions
             services.AddScoped<IFinanceService, FinanceService>();
             services.AddScoped<IProjectIndicatorsService, ProjectIndicatorsService>();
             services.AddScoped<Prumo.Application.Indicators.IndicatorDataLoader>();
+
+            // Indicadores do portfólio (Figura 9): um por chave do dashboard.
+            services.AddScoped<IPortfolioIndicator, BurnRateIndicator>();
+            services.AddScoped<IPortfolioIndicator, PortfolioHealthIndicator>();
+            services.AddScoped<IPortfolioIndicator, StrategicAllocationIndicator>();
+            services.AddScoped<IPortfolioIndicator, QualityIndicator>();
+            services.AddScoped<IPortfolioIndicator, CapacityIndicator>();
+            services.AddScoped<IPortfolioIndicator, LeadTimeIndicator>();
+            services.AddScoped<IPortfolioIndicator, NPVIndicator>();
+            services.AddScoped<IPortfolioIndicator, OkrAlignmentIndicator>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProjectDependencyService, ProjectDependencyService>();
             services.AddScoped<ITeamService, TeamService>();

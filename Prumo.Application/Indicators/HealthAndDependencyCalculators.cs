@@ -18,7 +18,7 @@ namespace Prumo.Application.Indicators
         int LateIssues,
         bool HasDependencyAtRisk);
 
-    public class ProjectHealth
+    public class ProjectHealth : IndicatorResult
     {
         public Guid ProjetoId { get; set; }
         public string Nome { get; set; } = string.Empty;
