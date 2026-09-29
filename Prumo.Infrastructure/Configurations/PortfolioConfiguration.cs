@@ -18,11 +18,15 @@ namespace Prumo.Infrastructure.Configurations
                 .ValueGeneratedOnAdd();
 
             builder.Property(p => p.Name)
-                .HasMaxLength(300)
+                .HasMaxLength(150)
                 .IsRequired();
 
             builder.Property(p => p.Description)
-                .HasMaxLength(500)
+                .HasMaxLength(1000)
+                .IsRequired(false);
+
+            builder.Property(p => p.Goal)
+                .HasMaxLength(1000)
                 .IsRequired(false);
 
             builder.Property(p => p.OwnerId)

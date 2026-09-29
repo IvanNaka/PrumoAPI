@@ -1,109 +1,78 @@
 using Microsoft.AspNetCore.Authorization;
-using Prumo.API.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json.Linq;
+using Prumo.API.Authorization;
 using Prumo.Application.DTOs.Portfolio;
 using Prumo.Application.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Prumo.API.Controllers
 {
+    // RF04–RF06, UC2, UC3, Figura 27.
     [ApiController]
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api/portfolios")]
     public class PortfoliosController : ControllerBase
     {
         private readonly IPortfolioService _portfolioService;
-        private readonly IPortfolioAccessService _access;
 
-        public PortfoliosController(IPortfolioService portfolioService, IPortfolioAccessService access)
+        public PortfoliosController(IPortfolioService portfolioService)
         {
             _portfolioService = portfolioService;
-            _access = access;
+        }
+
+        /// <summary>Portfólios visíveis para o usuário (D11). Lista vazia = RN05 no front-end.</summary>
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<PortfolioDto>>> GetAll()
+        {
+            return Ok(await _portfolioService.GetVisibleAsync());
         }
 
         [HttpGet("{id:guid}")]
         public async Task<ActionResult<PortfolioDto>> GetById(Guid id)
         {
-            await _access.EnsureAccessAsync(id);
             var portfolio = await _portfolioService.GetByIdAsync(id);
-            if (portfolio == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(portfolio);
+            return portfolio == null ? NotFound() : Ok(portfolio);
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<PortfolioDto>>> GetAllByOwnerId()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-
-            if (!Guid.TryParse(userId, out var userIdGuid))
-            {
-                return Unauthorized("User id claim is missing or invalid.");
-            }
-            var portfolios = await _portfolioService.GetByOwnerIdAsync(Guid.Parse(userId));
-            return Ok(portfolios);
-        }
-
-        [Authorize(Policy = Policies.EditarPortfolio)]
         [HttpPost]
-        public async Task<ActionResult<PortfolioDto>> Create([FromBody] CreatePortfolioDto createDto)
+        [Authorize(Policy = Policies.EditarPortfolio)]
+        public async Task<ActionResult<PortfolioDto>> Create([FromBody] CreatePortfolioDto dto)
         {
-            if (createDto == null)
-            {
-                return BadRequest("Invalid payload.");
-            }
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? User.FindFirstValue("sub");
-
-            if (!Guid.TryParse(userId, out var userIdGuid))
-            {
-                return Unauthorized("User id claim is missing or invalid.");
-            }
-            createDto.OwnerId = userIdGuid;
-            var createdPortfolio = await _portfolioService.CreateAsync(createDto);
-
-            return CreatedAtAction(nameof(GetById), new { id = createdPortfolio.Id }, createdPortfolio);
+            var created = await _portfolioService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
-        [Authorize(Policy = Policies.EditarPortfolio)]
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdatePortfolioDto updateDto)
+        [Authorize(Policy = Policies.EditarPortfolio)]
+        public async Task<ActionResult<PortfolioDto>> Update(Guid id, [FromBody] CreatePortfolioDto dto)
         {
-            if (updateDto == null || id != updateDto.Id)
-            {
-                return BadRequest("ID mismatch or invalid payload.");
-            }
-
-            var existingPortfolio = await _portfolioService.GetByIdAsync(id);
-            if (existingPortfolio == null)
-            {
-                return NotFound();
-            }
-            await _portfolioService.UpdateAsync(updateDto);
-
-            return NoContent();
+            return Ok(await _portfolioService.UpdateAsync(id, dto));
         }
 
-        [Authorize(Policy = Policies.EditarPortfolio)]
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
+        /// <summary>Aprovar portfólio, reavaliar estratégia ou encerrar (3.4.2).</summary>
+        [HttpPost("{id:guid}/acoes/{acao}")]
+        [Authorize(Policy = Policies.GovernarPortfolio)]
+        public async Task<ActionResult<PortfolioDto>> Action(Guid id, string acao)
         {
-            var existingPortfolio = await _portfolioService.GetByIdAsync(id);
-            if (existingPortfolio == null)
-            {
-                return NotFound();
-            }
+            return Ok(await _portfolioService.ApplyActionAsync(id, acao));
+        }
 
-            await _portfolioService.DeleteAsync(id);
+        [HttpGet("{id:guid}/membros")]
+        public async Task<ActionResult<IEnumerable<PortfolioMemberDto>>> GetMembers(Guid id)
+        {
+            return Ok(await _portfolioService.GetMembersAsync(id));
+        }
 
+        /// <summary>Somente o responsável do portfólio ou o Administrador.</summary>
+        [HttpPost("{id:guid}/membros")]
+        public async Task<ActionResult<IEnumerable<PortfolioMemberDto>>> AddMember(Guid id, [FromBody] AddPortfolioMemberDto dto)
+        {
+            return Ok(await _portfolioService.AddMemberAsync(id, dto.UsuarioId));
+        }
+
+        [HttpDelete("{id:guid}/membros/{usuarioId:guid}")]
+        public async Task<IActionResult> RemoveMember(Guid id, Guid usuarioId)
+        {
+            await _portfolioService.RemoveMemberAsync(id, usuarioId);
             return NoContent();
         }
     }

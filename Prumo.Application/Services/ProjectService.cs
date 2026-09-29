@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using Prumo.Application.DTOs.Project;
 using Prumo.Application.Interfaces;
+using Prumo.Application.StateMachines;
 using Prumo.Domain.Entities;
 using Prumo.Domain.Interfaces;
 using System;
@@ -14,11 +15,13 @@ namespace Prumo.Application.Services
     {
         private readonly IProjectRepository _projectRepository;
         private readonly IProjectEvaluationRepository _projectEvaluationRepository;
+        private readonly IPortfolioService _portfolioService;
 
-        public ProjectService(IProjectRepository projectRepository, IProjectEvaluationRepository projectEvaluationRepository)
+        public ProjectService(IProjectRepository projectRepository, IProjectEvaluationRepository projectEvaluationRepository, IPortfolioService portfolioService)
         {
             _projectRepository = projectRepository;
             _projectEvaluationRepository = projectEvaluationRepository;
+            _portfolioService = portfolioService;
         }
 
         public async Task<ProjectDto> GetByIdAsync(Guid id)
@@ -58,6 +61,9 @@ namespace Prumo.Application.Services
             };
 
             var projectCreated = await _projectRepository.AddAsync(projectObject);
+
+            // Figura 27: Configurado -> EmAnalise no primeiro projeto.
+            await _portfolioService.ApplyAutomaticEventAsync(projectObject.PortfolioId, PortfolioStateMachine.PrimeiroProjeto);
 
             if (projectDTO.CriteriaScores != null)
             {

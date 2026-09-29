@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Prumo.Application.DTOs.PriorityCriteria;
 using Prumo.Application.Interfaces;
+using Prumo.Application.StateMachines;
 using Prumo.Domain.Entities;
 using Prumo.Domain.Interfaces;
 
@@ -12,10 +13,12 @@ namespace Prumo.Application.Services
     public class PriorityCriteriaService : IPriorityCriteriaService
     {
         private readonly IPriorityCriteriaRepository _priorityCriteriaRepository;
+        private readonly IPortfolioService _portfolioService;
 
-        public PriorityCriteriaService(IPriorityCriteriaRepository priorityCriteriaRepository)
+        public PriorityCriteriaService(IPriorityCriteriaRepository priorityCriteriaRepository, IPortfolioService portfolioService)
         {
             _priorityCriteriaRepository = priorityCriteriaRepository;
+            _portfolioService = portfolioService;
         }
 
         public async Task<PriorityCriteriaDto> GetByIdAsync(Guid id)
@@ -56,6 +59,10 @@ namespace Prumo.Application.Services
 
             await _priorityCriteriaRepository.AddAsync(criteria);
 
+            // Figura 27: Criado -> Configurado no primeiro critério; Monitoramento -> Reavaliacao.
+            await _portfolioService.ApplyAutomaticEventAsync(criteria.PortfolioId, PortfolioStateMachine.PrimeiroCriterio);
+            await _portfolioService.ApplyAutomaticEventAsync(criteria.PortfolioId, PortfolioStateMachine.AlterarCriterio);
+
             return MapToDto(criteria);
         }
 
@@ -68,12 +75,18 @@ namespace Prumo.Application.Services
                 existingCriteria.ValueWeight = dto.ValueWeight;
 
                 await _priorityCriteriaRepository.UpdateAsync(existingCriteria);
+                await _portfolioService.ApplyAutomaticEventAsync(existingCriteria.PortfolioId, PortfolioStateMachine.AlterarCriterio);
             }
         }
 
         public async Task DeleteAsync(Guid id)
         {
+            var existing = await _priorityCriteriaRepository.GetByIdAsync(id);
             await _priorityCriteriaRepository.DeleteAsync(id);
+            if (existing != null)
+            {
+                await _portfolioService.ApplyAutomaticEventAsync(existing.PortfolioId, PortfolioStateMachine.AlterarCriterio);
+            }
         }
 
         private static PriorityCriteriaDto MapToDto(PriorityCriteria criteria)
