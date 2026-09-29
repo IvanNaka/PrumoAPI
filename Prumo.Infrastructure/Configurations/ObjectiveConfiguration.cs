@@ -15,10 +15,15 @@ namespace Prumo.Infrastructure.Configurations
             builder.HasKey(o => o.Id);
             builder.Property(o => o.Id).HasColumnType("uuid").ValueGeneratedOnAdd();
 
-            builder.Property(o => o.Title).HasMaxLength(500).IsRequired();
-            builder.Property(o => o.Description).HasMaxLength(2000).IsRequired(false);
-            builder.Property(o => o.StartDate).IsRequired();
-            builder.Property(o => o.EndDate).IsRequired();
+            builder.Property(o => o.Title).HasMaxLength(200).IsRequired();
+            builder.Property(o => o.Description).HasMaxLength(1000).IsRequired(false);
+            builder.Property(o => o.StartDate).HasColumnType("date").IsRequired(false);
+            builder.Property(o => o.EndDate).HasColumnType("date").IsRequired(false);
+
+            builder.HasMany(o => o.KeyResults)
+                .WithOne(k => k.Objective)
+                .HasForeignKey(k => k.ObjectiveId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

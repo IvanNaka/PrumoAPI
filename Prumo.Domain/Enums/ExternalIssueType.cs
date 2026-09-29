@@ -1,21 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Prumo.Domain.Enums
 {
     /// <summary>
-    /// Normalized item type across external tools (Jira issues, Azure DevOps work items,
-    /// GitHub issues/PRs, Trello cards), used to compute quality indicators (Bug vs Feature ratio).
+    /// Tipo de issue importada da ferramenta externa (TipoIssue). Usado nos indicadores de
+    /// qualidade (Bug x entregas) e lead time.
     /// </summary>
     public enum ExternalIssueType
     {
         Story,
         Task,
         Feature,
-        Bug,
-        Other
+        Bug
     }
 }

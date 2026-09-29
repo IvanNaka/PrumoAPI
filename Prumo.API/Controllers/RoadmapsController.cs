@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authorization;
+using Prumo.API.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -8,6 +10,7 @@ using Prumo.Application.Interfaces;
 namespace Prumo.API.Controllers
 {
     [ApiController]
+    [Authorize]
     [Route("api/[controller]")]
     public class RoadmapsController : ControllerBase
     {

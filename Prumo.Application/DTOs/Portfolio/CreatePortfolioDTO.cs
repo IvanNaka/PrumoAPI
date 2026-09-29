@@ -1,11 +1,11 @@
-﻿using System;
-
 namespace Prumo.Application.DTOs.Portfolio
 {
+    // POST /portfolios e PUT /portfolios/{id} — { nome, descricao, objetivo, responsavelId }
     public class CreatePortfolioDto
     {
-        public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
-        public Guid OwnerId { get; set; }
+        public string? Nome { get; set; }
+        public string? Descricao { get; set; }
+        public string? Objetivo { get; set; }
+        public Guid? ResponsavelId { get; set; }
     }
 }

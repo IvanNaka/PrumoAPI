@@ -1,258 +1,232 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
+using Microsoft.EntityFrameworkCore;
+using Prumo.Application.Common;
 using Prumo.Application.DTOs.Team;
+using Prumo.Application.Indicators;
 using Prumo.Application.Interfaces;
 using Prumo.Domain.Entities;
-using Prumo.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace Prumo.Application.Services
 {
+    // Equipes e membros (RF29–RF31) e capacidade (RF32, RF39, UC13, F9).
     public class TeamService : ITeamService
     {
-        private readonly ITeamRepository _teamRepository;
-        private readonly IUserRepository _userRepository;
-        private readonly IPortfolioRepository _portfolioRepository;
+        private readonly IAppDbContext _db;
+        private readonly ICurrentUserService _currentUser;
+        private readonly IndicatorDataLoader _loader;
 
-        public TeamService(
-            ITeamRepository teamRepository,
-            IUserRepository userRepository,
-            IPortfolioRepository portfolioRepository)
+        public TeamService(IAppDbContext db, ICurrentUserService currentUser, IndicatorDataLoader loader)
         {
-            _teamRepository = teamRepository;
-            _userRepository = userRepository;
-            _portfolioRepository = portfolioRepository;
+            _db = db;
+            _currentUser = currentUser;
+            _loader = loader;
         }
 
-        public async Task<TeamDto?> GetByIdAsync(Guid id)
+        public async Task<IEnumerable<EquipeDto>> GetAllAsync()
         {
-            var team = await _teamRepository.GetByIdAsync(id);
-            return team == null ? null : MapToDto(team);
+            var teams = await _db.Teams.AsNoTracking()
+                .Include(t => t.Members)
+                .Include(t => t.Portfolio)
+                .OrderBy(t => t.Name)
+                .ToListAsync();
+            return teams.Select(Map);
         }
 
-        public async Task<IEnumerable<TeamDto>> GetAllAsync()
+        public async Task<EquipeDto> GetAsync(Guid id)
         {
-            var teams = await _teamRepository.GetAllAsync();
-            return teams.Select(MapToDto);
+            var team = await _db.Teams.AsNoTracking()
+                .Include(t => t.Members)
+                .Include(t => t.Portfolio)
+                .SingleOrDefaultAsync(t => t.Id == id)
+                ?? throw Messages.NotFound("Equipe não encontrada.");
+            return Map(team);
         }
 
-        public async Task<IEnumerable<TeamDto>> GetByPortfolioIdAsync(Guid portfolioId)
+        public async Task<EquipeDto> CreateAsync(SalvarEquipeDto dto)
         {
-            var teams = await _teamRepository.GetByPortfolioIdAsync(portfolioId);
-            return teams.Select(MapToDto);
+            var nome = await ValidateTeamAsync(dto, null);
+            var team = new Team { Name = nome, PortfolioId = dto.PortfolioId, OwnerUserId = _currentUser.UserId };
+            _db.Teams.Add(team);
+            await _db.SaveChangesAsync();
+            return await GetAsync(team.Id);
         }
 
-        public async Task<TeamDto> CreateAsync(CreateTeamDto dto)
+        public async Task<EquipeDto> UpdateAsync(Guid id, SalvarEquipeDto dto)
         {
-            var portfolioExists = await _portfolioRepository.ExistsAsync(dto.PortfolioId);
-            if (!portfolioExists)
-            {
-                throw new InvalidOperationException("Portfolio not found.");
-            }
-
-            if (dto.OwnerUserId.HasValue)
-            {
-                var ownerExists = await _userRepository.ExistsAsync(dto.OwnerUserId.Value);
-                if (!ownerExists)
-                {
-                    throw new InvalidOperationException("Owner user not found.");
-                }
-            }
-
-            var team = new Team
-            {
-                PortfolioId = dto.PortfolioId,
-                Name = dto.Name,
-                OwnerUserId = dto.OwnerUserId,
-                InviteCode = await GenerateUniqueInviteCodeAsync()
-            };
-
-            var created = await _teamRepository.AddAsync(team);
-            var createdWithIncludes = await _teamRepository.GetByIdAsync(created.Id);
-
-            return MapToDto(createdWithIncludes ?? created);
-        }
-
-        public async Task UpdateAsync(UpdateTeamDto dto)
-        {
-            var existing = await _teamRepository.GetByIdAsync(dto.Id);
-            if (existing == null)
-            {
-                throw new InvalidOperationException("Team not found.");
-            }
-
-            if (dto.OwnerUserId.HasValue)
-            {
-                var ownerExists = await _userRepository.ExistsAsync(dto.OwnerUserId.Value);
-                if (!ownerExists)
-                {
-                    throw new InvalidOperationException("Owner user not found.");
-                }
-            }
-
-            existing.Name = dto.Name;
-            existing.OwnerUserId = dto.OwnerUserId;
-            existing.UpdatedDate = DateTime.UtcNow;
-
-            await _teamRepository.UpdateAsync(existing);
+            var team = await _db.Teams.SingleOrDefaultAsync(t => t.Id == id) ?? throw Messages.NotFound("Equipe não encontrada.");
+            team.Name = await ValidateTeamAsync(dto, id);
+            team.PortfolioId = dto.PortfolioId;
+            team.UpdatedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return await GetAsync(id);
         }
 
         public async Task DeleteAsync(Guid id)
         {
-            await _teamRepository.DeleteAsync(id);
+            var team = await _db.Teams.SingleOrDefaultAsync(t => t.Id == id) ?? throw Messages.NotFound("Equipe não encontrada.");
+            _db.Teams.Remove(team);
+            await _db.SaveChangesAsync();
         }
 
-        public async Task<TeamDto?> AddMemberAsync(Guid teamId, AddTeamMemberDto dto)
+        public async Task<IEnumerable<MembroEquipeDto>> GetMembersAsync(Guid teamId)
         {
-            var team = await _teamRepository.GetByIdAsync(teamId);
-            if (team == null)
-            {
-                throw new InvalidOperationException("Team not found.");
-            }
-
-            var userExists = await _userRepository.ExistsAsync(dto.UserId);
-            if (!userExists)
-            {
-                throw new InvalidOperationException("User not found.");
-            }
-
-            var existingMembership = await _teamRepository.GetMembershipAsync(teamId, dto.UserId);
-            if (existingMembership != null)
-            {
-                throw new InvalidOperationException("User is already a member of this team.");
-            }
-
-            var teamUser = new TeamUser
-            {
-                TeamId = teamId,
-                UserId = dto.UserId
-            };
-
-            await _teamRepository.AddMemberAsync(teamUser);
-
-            var updatedTeam = await _teamRepository.GetByIdAsync(teamId);
-            return updatedTeam == null ? null : MapToDto(updatedTeam);
+            await EnsureTeamAsync(teamId);
+            var members = await _db.TeamUsers.AsNoTracking().Where(m => m.TeamId == teamId).OrderBy(m => m.Name).ToListAsync();
+            return members.Select(MapMember);
         }
 
-        public async Task<TeamDto?> RemoveMemberAsync(Guid teamId, Guid userId)
+        public async Task<MembroEquipeDto> AddMemberAsync(Guid teamId, SalvarMembroDto dto)
         {
-            var team = await _teamRepository.GetByIdAsync(teamId);
-            if (team == null)
-            {
-                throw new InvalidOperationException("Team not found.");
-            }
-
-            var membership = await _teamRepository.GetMembershipAsync(teamId, userId);
-            if (membership == null)
-            {
-                throw new InvalidOperationException("User is not a member of this team.");
-            }
-
-            await _teamRepository.RemoveMemberAsync(membership);
-
-            var updatedTeam = await _teamRepository.GetByIdAsync(teamId);
-            return updatedTeam == null ? null : MapToDto(updatedTeam);
+            await EnsureTeamAsync(teamId);
+            var member = new TeamUser { TeamId = teamId };
+            await ApplyMemberAsync(member, dto, teamId, null);
+            _db.TeamUsers.Add(member);
+            await _db.SaveChangesAsync();
+            return MapMember(member);
         }
 
-        public async Task<TeamDto> JoinAsync(Guid userId, string inviteCode)
+        public async Task<MembroEquipeDto> UpdateMemberAsync(Guid teamId, Guid memberId, SalvarMembroDto dto)
         {
-            if (string.IsNullOrWhiteSpace(inviteCode))
-            {
-                throw new KeyNotFoundException("Invalid invite code.");
-            }
-
-            var team = await _teamRepository.GetByInviteCodeAsync(inviteCode);
-            if (team == null)
-            {
-                throw new KeyNotFoundException("Invalid invite code.");
-            }
-
-            var userExists = await _userRepository.ExistsAsync(userId);
-            if (!userExists)
-            {
-                throw new InvalidOperationException("User not found.");
-            }
-
-            var existingMembership = await _teamRepository.GetMembershipAsync(team.Id, userId);
-            if (existingMembership != null)
-            {
-                throw new InvalidOperationException("User is already a member of this team.");
-            }
-
-            var teamUser = new TeamUser
-            {
-                TeamId = team.Id,
-                UserId = userId
-            };
-
-            await _teamRepository.AddMemberAsync(teamUser);
-
-            var updatedTeam = await _teamRepository.GetByIdAsync(team.Id);
-            return MapToDto(updatedTeam ?? team);
+            var member = await _db.TeamUsers.SingleOrDefaultAsync(m => m.Id == memberId && m.TeamId == teamId)
+                ?? throw Messages.NotFound("Membro não encontrado.");
+            await ApplyMemberAsync(member, dto, teamId, memberId);
+            member.UpdatedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return MapMember(member);
         }
 
-        public async Task<string?> GetInviteCodeAsync(Guid teamId)
+        public async Task RemoveMemberAsync(Guid teamId, Guid memberId)
         {
-            var team = await _teamRepository.GetByIdAsync(teamId);
-            return team?.InviteCode;
+            var member = await _db.TeamUsers.SingleOrDefaultAsync(m => m.Id == memberId && m.TeamId == teamId)
+                ?? throw Messages.NotFound("Membro não encontrado.");
+            _db.TeamUsers.Remove(member);
+            await _db.SaveChangesAsync();
         }
 
-        private async Task<string> GenerateUniqueInviteCodeAsync()
+        public async Task<CapacityResult> GetCapacityAsync(Guid teamId, string? mes)
         {
-            const int maxAttempts = 10;
-            for (var attempt = 0; attempt < maxAttempts; attempt++)
+            var team = await _db.Teams.AsNoTracking().Include(t => t.Members).SingleOrDefaultAsync(t => t.Id == teamId)
+                ?? throw Messages.NotFound("Equipe não encontrada.");
+            var (year, month) = ParseMonth(mes);
+
+            // Exceção do UC13: equipe sem membros -> disponivel = false (RN18) — tratado no calculador.
+            return await _loader.CapacityAsync(team, year, month);
+        }
+
+        private static (int Year, int Month) ParseMonth(string? mes)
+        {
+            if (string.IsNullOrWhiteSpace(mes))
             {
-                var code = GenerateInviteCode();
-                if (!await _teamRepository.InviteCodeExistsAsync(code))
-                {
-                    return code;
-                }
+                var now = DateTime.UtcNow;
+                return (now.Year, now.Month);
             }
 
-            throw new InvalidOperationException("Failed to generate a unique team invite code. Please try again.");
-        }
-
-        // Unambiguous uppercase alphanumeric charset (no 0/O or 1/I) to keep the code easy to
-        // read aloud and type in manually when sharing it with teammates.
-        private const string InviteCodeCharset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        private const int InviteCodeLength = 8;
-
-        private static string GenerateInviteCode()
-        {
-            Span<byte> randomBytes = stackalloc byte[InviteCodeLength];
-            RandomNumberGenerator.Fill(randomBytes);
-
-            var chars = new char[InviteCodeLength];
-            for (var i = 0; i < InviteCodeLength; i++)
+            if (DateTime.TryParseExact(mes, "yyyy-MM", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
             {
-                chars[i] = InviteCodeCharset[randomBytes[i] % InviteCodeCharset.Length];
+                return (parsed.Year, parsed.Month);
             }
 
-            return new string(chars);
+            throw new BusinessRuleException(400, "Mês inválido. Use o formato AAAA-MM.");
         }
 
-        private static TeamDto MapToDto(Team team)
+        private async Task EnsureTeamAsync(Guid teamId)
         {
-            return new TeamDto
+            if (!await _db.Teams.AnyAsync(t => t.Id == teamId))
             {
-                Id = team.Id,
-                PortfolioId = team.PortfolioId,
-                PortfolioName = team.Portfolio?.Name,
-                Name = team.Name,
-                InviteCode = team.InviteCode,
-                OwnerUserId = team.OwnerUserId,
-                OwnerUserName = team.OwnerUser?.Name,
-                CreatedDate = team.CreatedDate,
-                Members = team.Members?.Select(m => new TeamMemberDto
-                {
-                    UserId = m.UserId,
-                    UserName = m.User?.Name ?? string.Empty,
-                    UserEmail = m.User?.Email ?? string.Empty,
-                    AddedDate = m.CreatedDate
-                }).ToList() ?? new List<TeamMemberDto>()
-            };
+                throw Messages.NotFound("Equipe não encontrada.");
+            }
         }
+
+        private async Task<string> ValidateTeamAsync(SalvarEquipeDto dto, Guid? currentId)
+        {
+            var nome = dto.Nome?.Trim() ?? string.Empty;
+            if (nome.Length == 0)
+            {
+                throw new BusinessRuleException(400, Messages.RN04_CamposObrigatorios,
+                    new Dictionary<string, string[]> { ["nome"] = new[] { "O nome da equipe é obrigatório." } });
+            }
+
+            nome = nome.Length > 100 ? nome[..100] : nome;
+            var lowered = nome.ToLower();
+            if (await _db.Teams.AnyAsync(t => t.Id != currentId && t.Name.ToLower() == lowered))
+            {
+                throw new BusinessRuleException(409, "Já existe uma equipe com este nome.");
+            }
+
+            if (dto.PortfolioId.HasValue && !await _db.Portfolios.AnyAsync(p => p.Id == dto.PortfolioId))
+            {
+                throw Messages.NotFound("Portfólio não encontrado.");
+            }
+
+            return nome;
+        }
+
+        private async Task ApplyMemberAsync(TeamUser member, SalvarMembroDto dto, Guid teamId, Guid? currentId)
+        {
+            var errors = new Dictionary<string, string[]>();
+            var nome = dto.Nome?.Trim() ?? string.Empty;
+            var email = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+            if (nome.Length == 0) errors["nome"] = new[] { "O nome é obrigatório." };
+            if (email.Length == 0) errors["email"] = new[] { "O e-mail é obrigatório." };
+            if (dto.CustoHora is null) errors["custoHora"] = new[] { "O custo por hora é obrigatório." };
+            if (dto.CapacidadeMensalHoras is null) errors["capacidadeMensalHoras"] = new[] { "A capacidade mensal é obrigatória." };
+            if (errors.Count > 0)
+            {
+                throw new BusinessRuleException(400, Messages.RN04_CamposObrigatorios, errors);
+            }
+
+            if (!Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            {
+                throw new BusinessRuleException(400, "Informe um e-mail válido.");
+            }
+
+            if (dto.CustoHora < 0)
+            {
+                throw new BusinessRuleException(400, "O custo por hora deve ser maior ou igual a 0.");
+            }
+
+            if (dto.CapacidadeMensalHoras is < 1 or > 300)
+            {
+                throw new BusinessRuleException(400, "A capacidade mensal deve ficar entre 1 e 300 horas.");
+            }
+
+            if (await _db.TeamUsers.AnyAsync(m => m.TeamId == teamId && m.Id != currentId && m.Email == email))
+            {
+                throw new BusinessRuleException(409, "Este e-mail já é membro da equipe.");
+            }
+
+            if (dto.UsuarioId.HasValue && !await _db.Users.AnyAsync(u => u.Id == dto.UsuarioId))
+            {
+                throw Messages.NotFound("Usuário não encontrado.");
+            }
+
+            member.Name = nome.Length > 150 ? nome[..150] : nome;
+            member.Email = email;
+            member.UserId = dto.UsuarioId;
+            member.HourlyCost = Math.Round(dto.CustoHora!.Value, 2);
+            member.MonthlyCapacityHours = dto.CapacidadeMensalHoras!.Value;
+        }
+
+        private static EquipeDto Map(Team team) => new()
+        {
+            Id = team.Id,
+            Nome = team.Name,
+            PortfolioId = team.PortfolioId,
+            PortfolioNome = team.Portfolio?.Name,
+            CapacidadeMensalTotal = team.Members.Sum(m => m.MonthlyCapacityHours),
+            Membros = team.Members.OrderBy(m => m.Name).Select(MapMember).ToList(),
+        };
+
+        private static MembroEquipeDto MapMember(TeamUser m) => new()
+        {
+            Id = m.Id,
+            EquipeId = m.TeamId,
+            UsuarioId = m.UserId,
+            Nome = m.Name,
+            Email = m.Email,
+            CustoHora = m.HourlyCost,
+            CapacidadeMensalHoras = m.MonthlyCapacityHours,
+        };
     }
 }

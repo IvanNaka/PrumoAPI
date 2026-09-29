@@ -1,17 +1,16 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Prumo.API.Authorization;
 using Prumo.Application.DTOs.Team;
+using Prumo.Application.Indicators;
 using Prumo.Application.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading.Tasks;
 
 namespace Prumo.API.Controllers
 {
-    // NOTE: [Authorize] temporarily removed - all endpoints are open while role
-    // permissions are disabled. Re-add [Authorize] / role checks when re-enabling.
+    // Equipes, membros e capacidade (RF29–RF32, UC13).
     [ApiController]
-    [Route("api/[controller]")]
+    [Authorize]
+    [Route("api/equipes")]
     public class TeamsController : ControllerBase
     {
         private readonly ITeamService _teamService;
@@ -21,178 +20,75 @@ namespace Prumo.API.Controllers
             _teamService = teamService;
         }
 
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<TeamDto>> GetById(Guid id)
-        {
-            var team = await _teamService.GetByIdAsync(id);
-            if (team == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(team);
-        }
-
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<TeamDto>>> GetAll()
+        public async Task<ActionResult<IEnumerable<EquipeDto>>> GetAll()
         {
-            var teams = await _teamService.GetAllAsync();
-            return Ok(teams);
+            return Ok(await _teamService.GetAllAsync());
         }
 
-        [HttpGet("portfolio/{portfolioId:guid}")]
-        public async Task<ActionResult<IEnumerable<TeamDto>>> GetByPortfolioId(Guid portfolioId)
+        [HttpGet("{id:guid}")]
+        public async Task<ActionResult<EquipeDto>> Get(Guid id)
         {
-            var teams = await _teamService.GetByPortfolioIdAsync(portfolioId);
-            return Ok(teams);
+            return Ok(await _teamService.GetAsync(id));
         }
 
         [HttpPost]
-        public async Task<ActionResult<TeamDto>> Create([FromBody] CreateTeamDto createDto)
+        [Authorize(Policy = Policies.EditarEquipes)]
+        public async Task<ActionResult<EquipeDto>> Create([FromBody] SalvarEquipeDto dto)
         {
-            if (createDto == null || string.IsNullOrWhiteSpace(createDto.Name))
-            {
-                return BadRequest("Invalid payload.");
-            }
-
-            try
-            {
-                var createdTeam = await _teamService.CreateAsync(createDto);
-                return CreatedAtAction(nameof(GetById), new { id = createdTeam.Id }, createdTeam);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var created = await _teamService.CreateAsync(dto);
+            return CreatedAtAction(nameof(Get), new { id = created.Id }, created);
         }
 
         [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTeamDto updateDto)
+        [Authorize(Policy = Policies.EditarEquipes)]
+        public async Task<ActionResult<EquipeDto>> Update(Guid id, [FromBody] SalvarEquipeDto dto)
         {
-            if (updateDto == null || id != updateDto.Id)
-            {
-                return BadRequest("ID mismatch or invalid payload.");
-            }
-
-            var existingTeam = await _teamService.GetByIdAsync(id);
-            if (existingTeam == null)
-            {
-                return NotFound();
-            }
-
-            try
-            {
-                await _teamService.UpdateAsync(updateDto);
-                return NoContent();
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return Ok(await _teamService.UpdateAsync(id, dto));
         }
 
         [HttpDelete("{id:guid}")]
+        [Authorize(Policy = Policies.EditarEquipes)]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var existingTeam = await _teamService.GetByIdAsync(id);
-            if (existingTeam == null)
-            {
-                return NotFound();
-            }
-
             await _teamService.DeleteAsync(id);
             return NoContent();
         }
 
-        [HttpPost("{id:guid}/members")]
-        public async Task<ActionResult<TeamDto>> AddMember(Guid id, [FromBody] AddTeamMemberDto addMemberDto)
+        [HttpGet("{id:guid}/membros")]
+        public async Task<ActionResult<IEnumerable<MembroEquipeDto>>> GetMembers(Guid id)
         {
-            if (addMemberDto == null)
-            {
-                return BadRequest("Invalid payload.");
-            }
-
-            try
-            {
-                var team = await _teamService.AddMemberAsync(id, addMemberDto);
-                if (team == null)
-                {
-                    return NotFound();
-                }
-
-                return Ok(team);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
+            return Ok(await _teamService.GetMembersAsync(id));
         }
 
-        [HttpDelete("{id:guid}/members/{userId:guid}")]
-        public async Task<ActionResult<TeamDto>> RemoveMember(Guid id, Guid userId)
+        [HttpPost("{id:guid}/membros")]
+        [Authorize(Policy = Policies.EditarEquipes)]
+        public async Task<ActionResult<MembroEquipeDto>> AddMember(Guid id, [FromBody] SalvarMembroDto dto)
         {
-            try
-            {
-                var team = await _teamService.RemoveMemberAsync(id, userId);
-                if (team == null)
-                {
-                    return NotFound();
-                }
-
-                return Ok(team);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return NotFound(ex.Message);
-            }
+            var created = await _teamService.AddMemberAsync(id, dto);
+            return Created($"/api/equipes/{id}/membros/{created.Id}", created);
         }
 
-        /// <summary>
-        /// Self-service join: adds the calling (JWT) user to the team identified by the given
-        /// invite code, without requiring the team owner/manager to explicitly add them.
-        /// </summary>
-        [HttpPost("join")]
-        public async Task<ActionResult<TeamDto>> Join([FromBody] JoinTeamDto joinDto)
+        [HttpPut("{id:guid}/membros/{membroId:guid}")]
+        [Authorize(Policy = Policies.EditarEquipes)]
+        public async Task<ActionResult<MembroEquipeDto>> UpdateMember(Guid id, Guid membroId, [FromBody] SalvarMembroDto dto)
         {
-            if (joinDto == null || string.IsNullOrWhiteSpace(joinDto.Code))
-            {
-                return BadRequest("Code is required.");
-            }
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            if (!Guid.TryParse(userId, out var userIdGuid))
-            {
-                return Unauthorized("User id claim is missing or invalid.");
-            }
-
-            try
-            {
-                var team = await _teamService.JoinAsync(userIdGuid, joinDto.Code);
-                return Ok(team);
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return Conflict(ex.Message);
-            }
+            return Ok(await _teamService.UpdateMemberAsync(id, membroId, dto));
         }
 
-        /// <summary>
-        /// Returns the team's invite code so its owner can share it with people who should join.
-        /// </summary>
-        [HttpGet("{id:guid}/code")]
-        public async Task<ActionResult<TeamInviteCodeDto>> GetInviteCode(Guid id)
+        [HttpDelete("{id:guid}/membros/{membroId:guid}")]
+        [Authorize(Policy = Policies.EditarEquipes)]
+        public async Task<IActionResult> RemoveMember(Guid id, Guid membroId)
         {
-            var code = await _teamService.GetInviteCodeAsync(id);
-            if (code == null)
-            {
-                return NotFound();
-            }
+            await _teamService.RemoveMemberAsync(id, membroId);
+            return NoContent();
+        }
 
-            return Ok(new TeamInviteCodeDto { Code = code });
+        /// <summary>Capacidade, ocupação e utilização da equipe no mês (F9): ?mes=AAAA-MM.</summary>
+        [HttpGet("{id:guid}/capacidade")]
+        public async Task<ActionResult<CapacityResult>> Capacity(Guid id, [FromQuery] string? mes)
+        {
+            return Ok(await _teamService.GetCapacityAsync(id, mes));
         }
     }
 }

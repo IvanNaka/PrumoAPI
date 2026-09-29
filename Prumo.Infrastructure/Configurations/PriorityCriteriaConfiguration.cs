@@ -18,11 +18,20 @@ namespace Prumo.Infrastructure.Configurations
                 .ValueGeneratedOnAdd();
 
             builder.Property(pc => pc.Name)
-                .HasMaxLength(200)
+                .HasMaxLength(100)
+                .IsRequired();
+
+            builder.Property(pc => pc.Description)
+                .HasMaxLength(500)
                 .IsRequired(false);
 
             builder.Property(pc => pc.ValueWeight)
-                .HasColumnType("numeric(18,2)")
+                .HasColumnType("numeric(5,2)")
+                .IsRequired();
+
+            builder.Property(pc => pc.Type)
+                .HasConversion<string>()
+                .HasMaxLength(20)
                 .IsRequired();
 
             builder.Property(pc => pc.PortfolioId)
@@ -33,7 +42,8 @@ namespace Prumo.Infrastructure.Configurations
                 .HasColumnType("uuid")
                 .IsRequired();
 
-            builder.HasIndex(pc => pc.PortfolioId);
+            // Nome único dentro do portfólio (RN09).
+            builder.HasIndex(pc => new { pc.PortfolioId, pc.Name }).IsUnique();
             builder.HasIndex(pc => pc.UserId);
 
             // EXPLICIT: single relationship mapped to PortfolioId

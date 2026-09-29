@@ -1,4 +1,4 @@
-﻿using Google.Apis.Auth;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Prumo.Application.DTOs.Auth;
 using Prumo.Application.Interfaces;
@@ -6,31 +6,29 @@ using Prumo.Application.Interfaces;
 namespace Prumo.API.Controllers
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("api/auth")]
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
+
         public AuthController(IAuthService authService)
         {
             _authService = authService;
         }
 
+        /// <summary>UC1: troca o ID token do Google pelo JWT do Prumo.</summary>
+        [AllowAnonymous]
         [HttpPost("google")]
-        public async Task<IActionResult> Google([FromBody] GoogleLoginDto dto)
+        public async Task<ActionResult<LoginResponseDto>> LoginGoogle([FromBody] GoogleLoginDto dto)
         {
-            if (dto == null || string.IsNullOrWhiteSpace(dto.IdToken))
-                return BadRequest("idToken is required.");
+            return Ok(await _authService.LoginGoogleAsync(dto?.IdToken ?? string.Empty));
+        }
 
-            try
-            {
-                var jwt = await _authService.SignInWithGoogleAsync(dto.IdToken);
-                return Ok(new { token = jwt });
-            }
-            catch (InvalidJwtException)
-            {
-                // Malformed or invalid Google ID token (bad signature, wrong audience, expired, etc.)
-                return Unauthorized(new { message = "Token do Google inválido ou expirado." });
-            }
+        [Authorize]
+        [HttpGet("me")]
+        public async Task<ActionResult<AuthUserDto>> Me()
+        {
+            return Ok(await _authService.GetCurrentUserAsync());
         }
     }
 }

@@ -25,35 +25,56 @@ namespace Prumo.Infrastructure.Migrations
             modelBuilder.Entity("Prumo.Domain.Entities.Alert", b =>
                 {
                     b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("IsResolved")
-                        .HasColumnType("boolean");
+                    b.Property<Guid?>("EntityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EntityType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Message")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
+                    b.Property<DateTime?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ProjectId");
+                    b.HasIndex("UserId", "Status");
+
+                    b.HasIndex("UserId", "Type", "EntityId");
 
                     b.ToTable("Alerts", (string)null);
                 });
@@ -75,20 +96,8 @@ namespace Prumo.Infrastructure.Migrations
                         .HasMaxLength(10)
                         .HasColumnType("character varying(10)");
 
-                    b.Property<decimal>("DiscountRateMonthly")
-                        .HasColumnType("decimal(9,4)");
-
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<decimal>("ExpectedReturn")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid");
-
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("decimal(18,2)");
@@ -116,35 +125,36 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<Guid>("BudgetId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("Category")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BudgetId");
+                    b.HasIndex("ProjectId");
 
                     b.ToTable("BudgetExpenses", (string)null);
                 });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.ExternalData", b =>
+            modelBuilder.Entity("Prumo.Domain.Entities.BusinessCase", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -153,32 +163,181 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal>("AnnualDiscountRate")
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("ExternalId")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.Property<decimal>("InitialInvestment")
+                        .HasColumnType("decimal(18,2)");
 
-                    b.Property<DateTime>("ImportedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("IntegrationId")
+                    b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("RawDataJson")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IntegrationId");
+                    b.HasIndex("ProjectId")
+                        .IsUnique();
 
-                    b.ToTable("ExternalData", (string)null);
+                    b.ToTable("BusinessCases", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.CashFlowForecast", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BusinessCaseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BusinessCaseId", "Month")
+                        .IsUnique();
+
+                    b.ToTable("CashFlowForecasts", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.DataProtectionKey", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("FriendlyName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Xml")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DataProtectionKeys", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.ExternalIssue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AssigneeEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Done")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateOnly?>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<decimal?>("EstimateHours")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Jira");
+
+                    b.Property<decimal>("SpentHours")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssigneeEmail");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("ProjectId");
+
+                    b.ToTable("Issues", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.ExternalWorklog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AuthorEmail")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("ExternalId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<decimal>("Hours")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)");
+
+                    b.Property<Guid>("IssueId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AuthorEmail");
+
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
+                    b.HasIndex("IssueId");
+
+                    b.ToTable("Worklogs", (string)null);
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.Integration", b =>
@@ -198,15 +357,27 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("FailedAttempts")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("LastSyncStatus")
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
                     b.Property<DateTime?>("LastSyncedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("NextAttemptAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<int>("SyncIntervalMinutes")
                         .ValueGeneratedOnAdd()
@@ -214,18 +385,59 @@ namespace Prumo.Infrastructure.Migrations
                         .HasDefaultValue(60);
 
                     b.Property<string>("Token")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
 
-                    b.Property<int>("Type")
-                        .HasColumnType("integer");
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Type")
+                        .IsUnique();
+
                     b.ToTable("Integrations", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.IntegrationSyncLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("FinishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("IntegrationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("IssuesProcessed")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("Success")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("WorklogsProcessed")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IntegrationId", "StartedAt");
+
+                    b.ToTable("IntegrationSyncLogs", (string)null);
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.KeyResult", b =>
@@ -251,8 +463,8 @@ namespace Prumo.Infrastructure.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -277,19 +489,19 @@ namespace Prumo.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
-                    b.Property<DateTime>("EndDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly?>("EndDate")
+                        .HasColumnType("date");
 
-                    b.Property<DateTime>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<DateOnly?>("StartDate")
+                        .HasColumnType("date");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -312,16 +524,25 @@ namespace Prumo.Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Description")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)");
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Goal")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -331,6 +552,42 @@ namespace Prumo.Infrastructure.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Portfolios", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.PortfolioMember", b =>
+                {
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("PortfolioId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PortfolioMembers", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.PortfolioObjective", b =>
+                {
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ObjectiveId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("PortfolioId", "ObjectiveId");
+
+                    b.HasIndex("ObjectiveId");
+
+                    b.ToTable("PortfolioObjectives", (string)null);
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.PriorityCriteria", b =>
@@ -345,12 +602,22 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Name")
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<Guid>("PortfolioId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -359,13 +626,14 @@ namespace Prumo.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<decimal>("ValueWeight")
-                        .HasColumnType("numeric(18,2)");
+                        .HasColumnType("numeric(5,2)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PortfolioId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("PortfolioId", "Name")
+                        .IsUnique();
 
                     b.ToTable("PriorityCriteria", (string)null);
                 });
@@ -379,17 +647,41 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
+                    b.Property<decimal>("ApprovedBudget")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal?>("CurrentScore")
+                        .HasColumnType("numeric(5,2)");
 
                     b.Property<string>("Description")
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
 
+                    b.Property<DateOnly>("EndDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("EvaluationStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("JiraProjectKey")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTime?>("LastPrioritizationDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("character varying(300)");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
@@ -397,9 +689,26 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<Guid>("PortfolioId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<int?>("RankingPosition")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly>("StartDate")
+                        .HasColumnType("date");
+
                     b.Property<string>("Status")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("StrategicCategory")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -435,9 +744,8 @@ namespace Prumo.Infrastructure.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("character varying(255)");
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -451,11 +759,12 @@ namespace Prumo.Infrastructure.Migrations
 
                     b.HasIndex("PortfolioId");
 
-                    b.HasIndex("ProjectId");
-
                     b.HasIndex("UserId");
 
-                    b.ToTable("ProjectDependency");
+                    b.HasIndex("ProjectId", "DependsOnProjectId")
+                        .IsUnique();
+
+                    b.ToTable("ProjectDependencies");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.ProjectEvaluation", b =>
@@ -470,11 +779,17 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<DateTime>("EvaluatedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<Guid>("PriorityCriteriaId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("ProjectId")
                         .HasColumnType("uuid");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
@@ -482,16 +797,14 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("Value")
-                        .HasColumnType("numeric");
-
                     b.HasKey("Id");
 
                     b.HasIndex("PriorityCriteriaId");
 
-                    b.HasIndex("ProjectId");
-
                     b.HasIndex("UserId");
+
+                    b.HasIndex("ProjectId", "PriorityCriteriaId")
+                        .IsUnique();
 
                     b.ToTable("ProjectEvaluation", (string)null);
                 });
@@ -543,9 +856,80 @@ namespace Prumo.Infrastructure.Migrations
 
                     b.HasIndex("ObjectiveId");
 
+                    b.ToTable("ProjectObjectives", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.RealizedReturn", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("ProjectId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
                     b.HasIndex("ProjectId");
 
-                    b.ToTable("ProjectObjectives", (string)null);
+                    b.ToTable("RealizedReturns", (string)null);
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.Report", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime>("GeneratedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("GeneratedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<Guid>("PortfolioId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GeneratedById");
+
+                    b.HasIndex("PortfolioId", "GeneratedAt");
+
+                    b.ToTable("Reports", (string)null);
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.RoadmapItem", b =>
@@ -600,30 +984,6 @@ namespace Prumo.Infrastructure.Migrations
                     b.ToTable("RoadmapItems", (string)null);
                 });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.Role", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Roles", (string)null);
-                });
-
             modelBuilder.Entity("Prumo.Domain.Entities.Team", b =>
                 {
                     b.Property<Guid>("Id")
@@ -636,20 +996,15 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("InviteCode")
-                        .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)");
-
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.Property<Guid?>("OwnerUserId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("PortfolioId")
+                    b.Property<Guid?>("PortfolioId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTime?>("UpdatedDate")
@@ -657,7 +1012,7 @@ namespace Prumo.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("InviteCode")
+                    b.HasIndex("Name")
                         .IsUnique();
 
                     b.HasIndex("OwnerUserId");
@@ -667,7 +1022,7 @@ namespace Prumo.Infrastructure.Migrations
                     b.ToTable("Teams", (string)null);
                 });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.TeamCapacityEntry", b =>
+            modelBuilder.Entity("Prumo.Domain.Entities.TeamUser", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -676,20 +1031,24 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<bool>("Active")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("AllocatedHours")
-                        .HasColumnType("numeric(9,2)");
-
-                    b.Property<decimal>("AvailableHours")
-                        .HasColumnType("numeric(9,2)");
-
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<int>("Month")
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<decimal>("HourlyCost")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("MonthlyCapacityHours")
                         .HasColumnType("integer");
 
-                    b.Property<int>("OccupancyPercent")
-                        .HasColumnType("integer");
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<Guid>("TeamId")
                         .HasColumnType("uuid");
@@ -697,40 +1056,14 @@ namespace Prumo.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
-
-                    b.Property<int>("Year")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("Email");
 
-                    b.HasIndex("TeamId", "UserId", "Year", "Month")
-                        .IsUnique();
-
-                    b.ToTable("TeamCapacityEntries", (string)null);
-                });
-
-            modelBuilder.Entity("Prumo.Domain.Entities.TeamUser", b =>
-                {
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("TeamId", "UserId");
+                    b.HasIndex("TeamId");
 
                     b.HasIndex("UserId");
 
@@ -754,37 +1087,50 @@ namespace Prumo.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("PasswordHash")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("RoleId")
-                        .HasColumnType("uuid");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
 
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email");
-
-                    b.HasIndex("RoleId");
+                    b.HasIndex("Email")
+                        .IsUnique();
 
                     b.ToTable("Users", (string)null);
                 });
 
+            modelBuilder.Entity("Prumo.Domain.Entities.UserRole", b =>
+                {
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Role")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.HasKey("UserId", "Role");
+
+                    b.ToTable("UserRoles", (string)null);
+                });
+
             modelBuilder.Entity("Prumo.Domain.Entities.Alert", b =>
                 {
-                    b.HasOne("Prumo.Domain.Entities.Project", null)
-                        .WithMany("Alerts")
-                        .HasForeignKey("ProjectId")
+                    b.HasOne("Prumo.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.Budget", b =>
@@ -800,13 +1146,79 @@ namespace Prumo.Infrastructure.Migrations
 
             modelBuilder.Entity("Prumo.Domain.Entities.BudgetExpense", b =>
                 {
-                    b.HasOne("Prumo.Domain.Entities.Budget", "Budget")
+                    b.HasOne("Prumo.Domain.Entities.Project", "Project")
                         .WithMany("Expenses")
-                        .HasForeignKey("BudgetId")
+                        .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Budget");
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.BusinessCase", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Project", "Project")
+                        .WithOne("BusinessCase")
+                        .HasForeignKey("Prumo.Domain.Entities.BusinessCase", "ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.CashFlowForecast", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.BusinessCase", "BusinessCase")
+                        .WithMany("Flows")
+                        .HasForeignKey("BusinessCaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BusinessCase");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.ExternalIssue", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Project", "Project")
+                        .WithMany()
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.ExternalWorklog", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.ExternalIssue", "Issue")
+                        .WithMany("Worklogs")
+                        .HasForeignKey("IssueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Issue");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.IntegrationSyncLog", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Integration", "Integration")
+                        .WithMany("Logs")
+                        .HasForeignKey("IntegrationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Integration");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.KeyResult", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Objective", "Objective")
+                        .WithMany("KeyResults")
+                        .HasForeignKey("ObjectiveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Objective");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.Portfolio", b =>
@@ -818,6 +1230,44 @@ namespace Prumo.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Owner");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.PortfolioMember", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Portfolio", "Portfolio")
+                        .WithMany("Members")
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prumo.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Portfolio");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.PortfolioObjective", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Objective", "Objective")
+                        .WithMany()
+                        .HasForeignKey("ObjectiveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prumo.Domain.Entities.Portfolio", "Portfolio")
+                        .WithMany("Objectives")
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Objective");
+
+                    b.Navigation("Portfolio");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.PriorityCriteria", b =>
@@ -898,7 +1348,7 @@ namespace Prumo.Infrastructure.Migrations
                     b.HasOne("Prumo.Domain.Entities.PriorityCriteria", "PriorityCriteria")
                         .WithMany()
                         .HasForeignKey("PriorityCriteriaId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("Prumo.Domain.Entities.Project", "Project")
@@ -941,11 +1391,51 @@ namespace Prumo.Infrastructure.Migrations
 
             modelBuilder.Entity("Prumo.Domain.Entities.ProjectObjective", b =>
                 {
-                    b.HasOne("Prumo.Domain.Entities.Project", null)
+                    b.HasOne("Prumo.Domain.Entities.Objective", "Objective")
+                        .WithMany("Projects")
+                        .HasForeignKey("ObjectiveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Prumo.Domain.Entities.Project", "Project")
                         .WithMany("ProjectObjectives")
                         .HasForeignKey("ProjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Objective");
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.RealizedReturn", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.Project", "Project")
+                        .WithMany("RealizedReturns")
+                        .HasForeignKey("ProjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.Report", b =>
+                {
+                    b.HasOne("Prumo.Domain.Entities.User", "GeneratedBy")
+                        .WithMany()
+                        .HasForeignKey("GeneratedById")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Prumo.Domain.Entities.Portfolio", "Portfolio")
+                        .WithMany()
+                        .HasForeignKey("PortfolioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GeneratedBy");
+
+                    b.Navigation("Portfolio");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.RoadmapItem", b =>
@@ -971,36 +1461,16 @@ namespace Prumo.Infrastructure.Migrations
                     b.HasOne("Prumo.Domain.Entities.User", "OwnerUser")
                         .WithMany()
                         .HasForeignKey("OwnerUserId")
-                        .OnDelete(DeleteBehavior.NoAction);
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Prumo.Domain.Entities.Portfolio", "Portfolio")
                         .WithMany("Teams")
                         .HasForeignKey("PortfolioId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("OwnerUser");
 
                     b.Navigation("Portfolio");
-                });
-
-            modelBuilder.Entity("Prumo.Domain.Entities.TeamCapacityEntry", b =>
-                {
-                    b.HasOne("Prumo.Domain.Entities.Team", "Team")
-                        .WithMany("CapacityEntries")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prumo.Domain.Entities.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.TeamUser", b =>
@@ -1008,38 +1478,58 @@ namespace Prumo.Infrastructure.Migrations
                     b.HasOne("Prumo.Domain.Entities.Team", "Team")
                         .WithMany("Members")
                         .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Prumo.Domain.Entities.User", "User")
                         .WithMany("TeamMemberships")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.Navigation("Team");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.User", b =>
+            modelBuilder.Entity("Prumo.Domain.Entities.UserRole", b =>
                 {
-                    b.HasOne("Prumo.Domain.Entities.Role", "Role")
-                        .WithMany("Users")
-                        .HasForeignKey("RoleId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                    b.HasOne("Prumo.Domain.Entities.User", "User")
+                        .WithMany("Roles")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Role");
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.Budget", b =>
+            modelBuilder.Entity("Prumo.Domain.Entities.BusinessCase", b =>
                 {
-                    b.Navigation("Expenses");
+                    b.Navigation("Flows");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.ExternalIssue", b =>
+                {
+                    b.Navigation("Worklogs");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.Integration", b =>
+                {
+                    b.Navigation("Logs");
+                });
+
+            modelBuilder.Entity("Prumo.Domain.Entities.Objective", b =>
+                {
+                    b.Navigation("KeyResults");
+
+                    b.Navigation("Projects");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.Portfolio", b =>
                 {
+                    b.Navigation("Members");
+
+                    b.Navigation("Objectives");
+
                     b.Navigation("PriorityCriterias");
 
                     b.Navigation("ProjectDependencies");
@@ -1053,31 +1543,27 @@ namespace Prumo.Infrastructure.Migrations
 
             modelBuilder.Entity("Prumo.Domain.Entities.Project", b =>
                 {
-                    b.Navigation("Alerts");
+                    b.Navigation("Budget");
 
-                    b.Navigation("Budget")
-                        .IsRequired();
+                    b.Navigation("BusinessCase");
 
                     b.Navigation("Dependencies");
 
                     b.Navigation("DependentProjects");
+
+                    b.Navigation("Expenses");
 
                     b.Navigation("ProjectEvaluations");
 
                     b.Navigation("ProjectMembers");
 
                     b.Navigation("ProjectObjectives");
-                });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.Role", b =>
-                {
-                    b.Navigation("Users");
+                    b.Navigation("RealizedReturns");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.Team", b =>
                 {
-                    b.Navigation("CapacityEntries");
-
                     b.Navigation("Members");
                 });
 
@@ -1086,6 +1572,8 @@ namespace Prumo.Infrastructure.Migrations
                     b.Navigation("Portfolios");
 
                     b.Navigation("Projects");
+
+                    b.Navigation("Roles");
 
                     b.Navigation("TeamMemberships");
                 });

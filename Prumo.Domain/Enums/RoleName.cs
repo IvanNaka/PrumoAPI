@@ -1,20 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Prumo.Domain.Enums
 {
+    // Perfis de acesso (RF02, D02). Os valores são gravados como texto e usados como claim de role no JWT.
     public enum RoleName
     {
-        Admin,
-        PO,
-        Gerente,
-        Diretoria,
-        TechLead,
-        ScrumMaster,
+        Desenvolvedor,
         QA,
-        DEV
+        ProductOwner,
+        TechLead,
+        GerenteProjeto,
+        Diretoria,
+        Administrador
     }
 }

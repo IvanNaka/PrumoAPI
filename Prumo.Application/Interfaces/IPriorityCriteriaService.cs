@@ -1,18 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Prumo.Application.DTOs.PriorityCriteria;
+using Prumo.Application.DTOs.Criteria;
 
 namespace Prumo.Application.Interfaces
 {
+    // UC4–UC6, RF07–RF09.
     public interface IPriorityCriteriaService
     {
-        Task<PriorityCriteriaDto> GetByIdAsync(Guid id);
-        Task<IEnumerable<PriorityCriteriaDto>> GetAllAsync();
-        Task<IEnumerable<PriorityCriteriaDto>> GetByPortfolioIdAsync(Guid portfolioId);
-        Task<IEnumerable<PriorityCriteriaDto>> GetByUserIdAsync(Guid userId);
-        Task<PriorityCriteriaDto> CreateAsync(CreatePriorityCriteriaDto dto);
-        Task UpdateAsync(UpdatePriorityCriteriaDto dto);
+        Task<IEnumerable<CriterioDto>> ListByPortfolioAsync(Guid portfolioId);
+        Task<CriterioDto> CreateAsync(Guid portfolioId, SalvarCriterioDto dto);
+        Task<CriterioDto> UpdateAsync(Guid id, SalvarCriterioDto dto);
         Task DeleteAsync(Guid id);
     }
 }

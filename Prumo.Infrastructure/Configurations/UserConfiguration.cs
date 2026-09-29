@@ -1,7 +1,6 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Prumo.Domain.Entities;
-using Prumo.Infrastructure.Configurations;
 
 namespace Prumo.Infrastructure.Configurations
 {
@@ -13,33 +12,28 @@ namespace Prumo.Infrastructure.Configurations
 
             builder.ToTable("Users");
 
-            // Primary Key
             builder.HasKey(prop => prop.Id);
             builder.Property(prop => prop.Id)
                 .HasColumnType("uuid")
                 .ValueGeneratedOnAdd();
 
-            // Foreign Key
-            builder.Property(prop => prop.RoleId)
-                .HasColumnType("uuid");
-
-            // String Properties
             builder.Property(prop => prop.Email)
                 .HasMaxLength(200)
                 .IsRequired();
             builder.Property(prop => prop.Name)
-                .HasMaxLength(200)
+                .HasMaxLength(150)
                 .IsRequired();
+            builder.Property(prop => prop.IsActive)
+                .IsRequired()
+                .HasDefaultValue(true);
 
-            // Index for better query performance
-            builder.HasIndex(prop => prop.Email);
-            builder.HasIndex(prop => prop.RoleId);
+            // O e-mail é sempre gravado em minúsculas, então o índice único basta.
+            builder.HasIndex(prop => prop.Email).IsUnique();
 
-            // Relationships
-            builder.HasOne(a => a.Role)
-                .WithMany(p => p.Users)
-                .HasForeignKey(a => a.RoleId)
-                .OnDelete(DeleteBehavior.NoAction);
+            builder.HasMany(u => u.Roles)
+                .WithOne(r => r.User)
+                .HasForeignKey(r => r.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

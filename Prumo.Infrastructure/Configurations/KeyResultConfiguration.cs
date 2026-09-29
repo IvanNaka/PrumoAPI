@@ -16,7 +16,7 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(k => k.Id).HasColumnType("uuid").ValueGeneratedOnAdd();
 
             builder.Property(k => k.ObjectiveId).HasColumnType("uuid").IsRequired();
-            builder.Property(k => k.Title).HasMaxLength(500).IsRequired();
+            builder.Property(k => k.Title).HasMaxLength(300).IsRequired();
             builder.Property(k => k.TargetValue).HasColumnType("decimal(18,2)").IsRequired();
             builder.Property(k => k.CurrentValue).HasColumnType("decimal(18,2)").IsRequired();
 

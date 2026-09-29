@@ -1,15 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace Prumo.Domain.Enums
 {
+    // Tipo de notificação (RF45, D14).
     public enum AlertType
     {
-        Warning,
-        Critical,
-        Info
+        Atraso,
+        Risco,
+        Conflito,
+        Desalinhamento,
+        EstouroOrcamento
     }
 }

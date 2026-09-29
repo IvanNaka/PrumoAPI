@@ -16,13 +16,8 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(b => b.Id).HasColumnType("uuid").ValueGeneratedOnAdd();
 
             builder.Property(b => b.ProjectId).HasColumnType("uuid").IsRequired();
-
             builder.Property(b => b.TotalAmount).HasColumnType("decimal(18,2)").IsRequired();
             builder.Property(b => b.Currency).HasMaxLength(10).IsRequired();
-            builder.Property(b => b.StartDate).IsRequired();
-            builder.Property(b => b.EndDate).IsRequired();
-            builder.Property(b => b.DiscountRateMonthly).HasColumnType("decimal(9,4)").IsRequired();
-            builder.Property(b => b.ExpectedReturn).HasColumnType("decimal(18,2)").IsRequired();
 
             // 1:1 com Project
             builder.HasIndex(b => b.ProjectId).IsUnique();

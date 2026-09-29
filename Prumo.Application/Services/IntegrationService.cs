@@ -1,231 +1,190 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Prumo.Application.Common;
 using Prumo.Application.DTOs.Integration;
-using Prumo.Application.Exceptions;
 using Prumo.Application.Interfaces;
+using Prumo.Application.StateMachines;
 using Prumo.Domain.Entities;
-using Prumo.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+using Prumo.Domain.Enums;
 
 namespace Prumo.Application.Services
 {
+    // Integração Jira — configuração e teste de conexão (RF47, UC15, Figura 29).
     public class IntegrationService : IIntegrationService
     {
-        private readonly IRepository<Integration> _integrationRepository;
-        private readonly IRepository<ExternalData> _externalDataRepository;
-        private readonly IIntegrationProviderFactory _providerFactory;
+        private readonly IAppDbContext _db;
+        private readonly IIntegrationProviderFactory _providers;
+        private readonly ISecretProtector _protector;
         private readonly ILogger<IntegrationService> _logger;
 
         public IntegrationService(
-            IRepository<Integration> integrationRepository,
-            IRepository<ExternalData> externalDataRepository,
-            IIntegrationProviderFactory providerFactory,
+            IAppDbContext db,
+            IIntegrationProviderFactory providers,
+            ISecretProtector protector,
             ILogger<IntegrationService> logger)
         {
-            _integrationRepository = integrationRepository;
-            _externalDataRepository = externalDataRepository;
-            _providerFactory = providerFactory;
+            _db = db;
+            _providers = providers;
+            _protector = protector;
             _logger = logger;
         }
 
-        public async Task<IEnumerable<IntegrationDto>> GetAllAsync()
+        public async Task<IntegracaoJiraDto> GetJiraAsync()
         {
-            var entities = await _integrationRepository.GetAllAsync();
-            return entities.Select(MapToDto);
+            var integration = await _db.Integrations.AsNoTracking().SingleOrDefaultAsync(i => i.Type == IntegrationType.Jira);
+            return Map(integration);
         }
 
-        public async Task<IntegrationDto> GetByIdAsync(Guid id)
+        public async Task<IntegracaoJiraDto> SaveJiraAsync(SalvarIntegracaoJiraDto dto)
         {
-            var entity = await _integrationRepository.GetByIdAsync(id);
-            return entity == null ? null : MapToDto(entity);
-        }
+            var integration = await _db.Integrations.SingleOrDefaultAsync(i => i.Type == IntegrationType.Jira);
+            var isNew = integration == null;
+            integration ??= new Integration { Type = IntegrationType.Jira, Status = IntegrationStatus.NaoConfigurada };
 
-        public async Task<IntegrationDto> ConfigureAsync(ConfigureIntegrationDto dto)
-        {
-            var provider = GetRequiredProvider(dto.Type);
-
-            var validation = await provider.ValidateConnectionAsync(dto.ApiUrl, dto.Token);
-            if (!validation.Success)
+            var url = dto.Url?.Trim().TrimEnd('/') ?? string.Empty;
+            var email = dto.Email?.Trim().ToLowerInvariant() ?? string.Empty;
+            var token = dto.ApiToken?.Trim();
+            var errors = new Dictionary<string, string[]>();
+            if (url.Length == 0) errors["url"] = new[] { "A URL é obrigatória." };
+            if (email.Length == 0) errors["email"] = new[] { "O e-mail é obrigatório." };
+            if (string.IsNullOrEmpty(token) && string.IsNullOrEmpty(integration.Token)) errors["apiToken"] = new[] { "O API token é obrigatório." };
+            if (errors.Count > 0)
             {
-                throw new IntegrationAuthenticationException(
-                    validation.Message ?? "Falha na autenticação com a ferramenta externa.");
+                throw new BusinessRuleException(400, Messages.RN04_CamposObrigatorios, errors);
             }
 
-            var entity = new Integration
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttps && uri.Scheme != Uri.UriSchemeHttp))
             {
-                Type = dto.Type,
-                ApiUrl = dto.ApiUrl,
-                Token = dto.Token,
-                IsActive = true,
-                SyncIntervalMinutes = dto.SyncIntervalMinutes > 0 ? dto.SyncIntervalMinutes : 60,
-            };
-
-            await _integrationRepository.AddAsync(entity);
-
-            return MapToDto(entity);
-        }
-
-        public async Task<IntegrationDto> UpdateAsync(Guid id, UpdateIntegrationDto dto)
-        {
-            var entity = await _integrationRepository.GetByIdAsync(id);
-            if (entity == null) return null;
-
-            entity.ApiUrl = dto.ApiUrl ?? entity.ApiUrl;
-            if (!string.IsNullOrWhiteSpace(dto.Token))
-            {
-                entity.Token = dto.Token;
-            }
-            entity.IsActive = dto.IsActive;
-            entity.SyncIntervalMinutes = dto.SyncIntervalMinutes > 0 ? dto.SyncIntervalMinutes : entity.SyncIntervalMinutes;
-
-            await _integrationRepository.UpdateAsync(entity);
-
-            return MapToDto(entity);
-        }
-
-        public async Task DeleteAsync(Guid id)
-        {
-            await _integrationRepository.DeleteAsync(id);
-        }
-
-        public async Task<IntegrationSyncResultDto> SyncAsync(Guid integrationId)
-        {
-            var integration = await _integrationRepository.GetByIdAsync(integrationId);
-            if (integration == null)
-            {
-                throw new KeyNotFoundException($"Integração {integrationId} não encontrada.");
+                throw new BusinessRuleException(400, "Informe uma URL válida, por exemplo https://empresa.atlassian.net.");
             }
 
-            var provider = GetRequiredProvider(integration.Type);
+            var intervalo = dto.IntervaloSincronizacaoMinutos ?? integration.SyncIntervalMinutes;
+            if (intervalo is < 15 or > 1440)
+            {
+                throw new BusinessRuleException(400, "O intervalo de sincronização deve ficar entre 15 e 1440 minutos.");
+            }
 
-            IntegrationSyncResultDto result;
+            // Salvar credenciais -> Configurada (Figura 29).
+            integration.Status = IntegrationStateMachine.Aplicar(integration.Status, IntegrationStateMachine.Salvar);
+            integration.ApiUrl = url;
+            integration.Email = email;
+            if (!string.IsNullOrEmpty(token))
+            {
+                integration.Token = _protector.Protect(token);
+            }
+            integration.SyncIntervalMinutes = intervalo;
+            integration.IsActive = dto.Ativo ?? true;
+            integration.FailedAttempts = 0;
+            integration.NextAttemptAt = null;
+            integration.UpdatedDate = DateTime.UtcNow;
+
+            if (isNew)
+            {
+                _db.Integrations.Add(integration);
+            }
+
+            await _db.SaveChangesAsync();
+
+            // Em seguida testa automaticamente; em caso de falha a configuração continua salva (ErroConexao).
+            await RunConnectionTestAsync(integration);
+            return Map(integration);
+        }
+
+        public async Task<IntegracaoJiraDto> TestJiraAsync()
+        {
+            var integration = await _db.Integrations.SingleOrDefaultAsync(i => i.Type == IntegrationType.Jira);
+            if (integration == null || integration.Status == IntegrationStatus.NaoConfigurada)
+            {
+                throw new BusinessRuleException(409, Messages.RN22_Transicao(IntegrationStatus.NaoConfigurada, IntegrationStateMachine.Testar));
+            }
+
+            await RunConnectionTestAsync(integration);
+            return Map(integration);
+        }
+
+        public async Task<IEnumerable<SincronizacaoLogDto>> GetJiraLogsAsync(int limit = 50)
+        {
+            return await _db.IntegrationSyncLogs.AsNoTracking()
+                .Where(l => l.Integration.Type == IntegrationType.Jira)
+                .OrderByDescending(l => l.StartedAt)
+                .Take(limit)
+                .Select(l => new SincronizacaoLogDto
+                {
+                    Id = l.Id,
+                    Inicio = l.StartedAt,
+                    Fim = l.FinishedAt,
+                    Sucesso = l.Success,
+                    IssuesProcessadas = l.IssuesProcessed,
+                    WorklogsProcessados = l.WorklogsProcessed,
+                    MensagemErro = l.ErrorMessage,
+                })
+                .ToListAsync();
+        }
+
+        /// <summary>Configurada -> TestandoConexao -> Conectada | ErroConexao. Falha: RN24 (400).</summary>
+        private async Task RunConnectionTestAsync(Integration integration)
+        {
+            integration.Status = IntegrationStateMachine.Aplicar(integration.Status, IntegrationStateMachine.Testar);
+            await _db.SaveChangesAsync();
+
+            bool ok;
             try
             {
-                var options = new IntegrationSyncOptions { SinceUtc = integration.LastSyncedAt };
-                result = await provider.GetDataAsync(integration, options);
+                var provider = _providers.GetProvider(integration.Type)
+                    ?? throw new BusinessRuleException(400, "Integração planejada para versão futura.");
+                ok = await provider.TestConnectionAsync(Credentials(integration, _protector, _logger));
             }
-            catch (IntegrationAuthenticationException)
+            catch (BusinessRuleException)
             {
-                // UC16 exception flow: "Token expirado" -> interrompe a sincronização e sinaliza
-                // a necessidade de nova autenticação; não agenda retry automático.
-                integration.LastSyncStatus = "AuthenticationFailed";
-                await _integrationRepository.UpdateAsync(integration);
-                _logger.LogWarning("Sincronização da integração {IntegrationId} interrompida: token expirado ou inválido.", integrationId);
                 throw;
             }
-            catch (IntegrationUnavailableException ex)
+            catch (Exception ex)
             {
-                // UC16 exception flow: "API indisponível" -> registra o erro; uma nova tentativa
-                // será feita no próximo ciclo da rotina automática (RF51).
-                integration.LastSyncStatus = "Unavailable";
-                await _integrationRepository.UpdateAsync(integration);
-                _logger.LogError(ex, "Falha ao sincronizar integração {IntegrationId}: API externa indisponível.", integrationId);
-                throw;
+                _logger.LogWarning(ex, "Falha ao testar a conexão com o Jira.");
+                ok = false;
             }
 
-            result.IssuesImported = await UpsertExternalDataAsync(integration.Id, result.Issues, i => i.ExternalId);
-            result.WorklogsImported = await UpsertExternalDataAsync(
-                integration.Id, result.Worklogs, w => $"{w.IssueExternalId}:{w.UserName}:{w.LoggedAt:O}");
+            integration.Status = IntegrationStateMachine.Aplicar(integration.Status,
+                ok ? IntegrationStateMachine.Sucesso : IntegrationStateMachine.Falha);
+            await _db.SaveChangesAsync();
 
-            integration.LastSyncedAt = DateTime.UtcNow;
-            integration.LastSyncStatus = "Success";
-            await _integrationRepository.UpdateAsync(integration);
-
-            result.IntegrationId = integration.Id;
-            result.SyncedAtUtc = integration.LastSyncedAt.Value;
-
-            return result;
-        }
-
-        public async Task SyncDueIntegrationsAsync()
-        {
-            var dueIds = await GetDueIntegrationIdsAsync();
-
-            foreach (var integrationId in dueIds)
+            if (!ok)
             {
-                try
-                {
-                    await SyncAsync(integrationId);
-                }
-                catch (Exception ex)
-                {
-                    // Errors are already persisted on the integration's LastSyncStatus; keep processing
-                    // the remaining integrations so a single failure doesn't halt the whole routine.
-                    _logger.LogError(ex, "Falha na rotina automática de sincronização da integração {IntegrationId}.", integrationId);
-                }
+                throw new BusinessRuleException(400, Messages.RN24_FalhaJira);
             }
         }
 
-        public async Task<IEnumerable<Guid>> GetDueIntegrationIdsAsync()
+        internal static IntegrationCredentials Credentials(Integration integration, ISecretProtector protector, ILogger logger)
         {
-            var integrations = await _integrationRepository.FindAsync(i => i.IsActive);
-
-            return integrations
-                .Where(i => i.LastSyncedAt == null ||
-                    DateTime.UtcNow >= i.LastSyncedAt.Value.AddMinutes(i.SyncIntervalMinutes))
-                .Select(i => i.Id)
-                .ToList();
-        }
-
-        private IIntegrationProvider GetRequiredProvider(Domain.Enums.IntegrationType type)
-        {
-            var provider = _providerFactory.GetProvider(type);
-            if (provider == null)
+            string token;
+            try
             {
-                throw new NotSupportedException(
-                    $"Não há um provedor de integração implementado para '{type}'.");
+                token = protector.Unprotect(integration.Token);
             }
-            return provider;
-        }
-
-        private async Task<int> UpsertExternalDataAsync<T>(Guid integrationId, IEnumerable<T> items, Func<T, string> externalIdSelector)
-        {
-            var count = 0;
-            foreach (var item in items)
+            catch (Exception ex)
             {
-                var externalId = externalIdSelector(item);
-                var existing = (await _externalDataRepository.FindAsync(
-                    e => e.IntegrationId == integrationId && e.ExternalId == externalId)).FirstOrDefault();
-
-                var rawJson = JsonSerializer.Serialize(item);
-
-                if (existing == null)
-                {
-                    await _externalDataRepository.AddAsync(new ExternalData
-                    {
-                        IntegrationId = integrationId,
-                        ExternalId = externalId,
-                        RawDataJson = rawJson,
-                        ImportedAt = DateTime.UtcNow,
-                    });
-                }
-                else
-                {
-                    existing.RawDataJson = rawJson;
-                    existing.ImportedAt = DateTime.UtcNow;
-                    await _externalDataRepository.UpdateAsync(existing);
-                }
-
-                count++;
+                // Token antigo sem criptografia ou chave perdida: força nova autenticação.
+                logger.LogWarning(ex, "Não foi possível descriptografar o token do Jira.");
+                token = string.Empty;
             }
-            return count;
+
+            return new IntegrationCredentials(integration.ApiUrl, integration.Email, token);
         }
 
-        private static IntegrationDto MapToDto(Integration entity)
-        {
-            return new IntegrationDto
+        internal static IntegracaoJiraDto Map(Integration? integration) => integration == null
+            ? new IntegracaoJiraDto()
+            : new IntegracaoJiraDto
             {
-                Id = entity.Id,
-                Type = entity.Type,
-                ApiUrl = entity.ApiUrl,
-                IsActive = entity.IsActive,
-                SyncIntervalMinutes = entity.SyncIntervalMinutes,
-                LastSyncedAt = entity.LastSyncedAt,
-                LastSyncStatus = entity.LastSyncStatus,
+                Configurada = integration.Status != IntegrationStatus.NaoConfigurada,
+                Url = integration.ApiUrl,
+                Email = integration.Email,
+                IntervaloSincronizacaoMinutos = integration.SyncIntervalMinutes,
+                Ativo = integration.IsActive,
+                Status = integration.Status.ToString(),
+                UltimaSincronizacao = integration.LastSyncedAt,
+                TentativasFalhas = integration.FailedAttempts,
+                ProximaTentativa = integration.NextAttemptAt,
+                TokenConfigurado = !string.IsNullOrEmpty(integration.Token),
             };
-        }
     }
 }

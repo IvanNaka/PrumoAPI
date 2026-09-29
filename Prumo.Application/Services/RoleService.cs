@@ -1,27 +1,16 @@
 using Prumo.Application.DTOs.Role;
 using Prumo.Application.Interfaces;
-using Prumo.Domain.Interfaces;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Prumo.Domain.Enums;
 
 namespace Prumo.Application.Services
 {
+    // Os perfis são o enum RoleName (Seção 3.1); não há mais tabela de perfis.
     public class RoleService : IRoleService
     {
-        private readonly IRoleRepository _roleRepository;
-
-        public RoleService(IRoleRepository roleRepository)
+        public Task<IEnumerable<RoleDto>> GetAllAsync()
         {
-            _roleRepository = roleRepository;
-        }
-
-        public async Task<IEnumerable<RoleDto>> GetAllAsync()
-        {
-            var roles = await _roleRepository.GetAllAsync();
-            return roles
-                .OrderBy(r => r.Name)
-                .Select(r => new RoleDto { Id = r.Id, Name = r.Name });
+            IEnumerable<RoleDto> roles = Enum.GetNames<RoleName>().Select(name => new RoleDto { Name = name });
+            return Task.FromResult(roles);
         }
     }
 }
