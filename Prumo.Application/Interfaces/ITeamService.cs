@@ -1,31 +1,23 @@
 using Prumo.Application.DTOs.Team;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Prumo.Application.Indicators;
 
 namespace Prumo.Application.Interfaces
 {
+    // Equipes, membros e capacidade (RF29–RF32, RF39, UC13).
     public interface ITeamService
     {
-        Task<TeamDto?> GetByIdAsync(Guid id);
-        Task<IEnumerable<TeamDto>> GetAllAsync();
-        Task<IEnumerable<TeamDto>> GetByPortfolioIdAsync(Guid portfolioId);
-        Task<TeamDto> CreateAsync(CreateTeamDto dto);
-        Task UpdateAsync(UpdateTeamDto dto);
+        Task<IEnumerable<EquipeDto>> GetAllAsync();
+        Task<EquipeDto> GetAsync(Guid id);
+        Task<EquipeDto> CreateAsync(SalvarEquipeDto dto);
+        Task<EquipeDto> UpdateAsync(Guid id, SalvarEquipeDto dto);
         Task DeleteAsync(Guid id);
 
-        Task<TeamDto?> AddMemberAsync(Guid teamId, AddTeamMemberDto dto);
-        Task<TeamDto?> RemoveMemberAsync(Guid teamId, Guid userId);
+        Task<IEnumerable<MembroEquipeDto>> GetMembersAsync(Guid teamId);
+        Task<MembroEquipeDto> AddMemberAsync(Guid teamId, SalvarMembroDto dto);
+        Task<MembroEquipeDto> UpdateMemberAsync(Guid teamId, Guid memberId, SalvarMembroDto dto);
+        Task RemoveMemberAsync(Guid teamId, Guid memberId);
 
-        /// <summary>
-        /// Adds the given user to the team identified by its invite code (self-service join,
-        /// as opposed to <see cref="AddMemberAsync"/> which requires the team owner/manager).
-        /// </summary>
-        Task<TeamDto> JoinAsync(Guid userId, string inviteCode);
-
-        /// <summary>
-        /// Returns the invite code for the given team so its owner can share it with others.
-        /// </summary>
-        Task<string?> GetInviteCodeAsync(Guid teamId);
+        /// <summary>GET /equipes/{id}/capacidade?mes=AAAA-MM — F9 da equipe e de cada membro.</summary>
+        Task<CapacityResult> GetCapacityAsync(Guid teamId, string? mes);
     }
 }

@@ -1,27 +1,24 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Prumo.Domain.Entities
 {
+    // Equipe (RF29).
     public class Team : BaseEntity
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 
-        public Guid PortfolioId { get; set; }
-        public Portfolio Portfolio { get; set; }
+        /// <summary>Opcional: equipe vinculada a um portfólio (usada pelo indicador de capacidade).</summary>
+        public Guid? PortfolioId { get; set; }
+        public Portfolio? Portfolio { get; set; }
 
+        /// <summary>Nome único (100).</summary>
         public string Name { get; set; } = string.Empty;
 
-        /// <summary>
-        /// Short, unique, human-shareable code used by other users to join this team
-        /// via <c>POST /api/teams/join</c> without needing an explicit invite from the owner.
-        /// </summary>
-        public string InviteCode { get; set; } = string.Empty;
-
+        /// <summary>Usuário que cadastrou a equipe.</summary>
         public Guid? OwnerUserId { get; set; }
-        public User OwnerUser { get; set; }
+        public User? OwnerUser { get; set; }
 
         public ICollection<TeamUser> Members { get; set; } = new List<TeamUser>();
-        public ICollection<TeamCapacityEntry> CapacityEntries { get; set; } = new List<TeamCapacityEntry>();
     }
 }

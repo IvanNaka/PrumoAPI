@@ -69,12 +69,43 @@ namespace Prumo.Application.Indicators
             });
         }
 
+        /// <summary>F9 da equipe (e de cada membro) no mês informado.</summary>
+        public async Task<CapacityResult> CapacityAsync(Team team, int year, int month)
+        {
+            var members = team.Members
+                .Select(m => new MemberCapacity(m.Id, m.Name, m.Email, m.MonthlyCapacityHours))
+                .ToList();
+            var emails = members.Select(m => m.Email.ToLowerInvariant()).ToList();
+
+            var issues = await OpenIssuesForEmailsAsync(emails);
+            var worklogs = await WorklogsForEmailsAsync(emails, year, month);
+            return CapacityCalculator.CalcularEquipe(team.Id, team.Name, members, issues, worklogs, year, month);
+        }
+
         /// <summary>Worklogs de cada projeto (horas e e-mail do autor). Alimentado pela integração Jira (T17).</summary>
         protected virtual Task<Dictionary<Guid, List<WorklogHours>>> WorklogHoursAsync(IReadOnlyCollection<Guid> projectIds) =>
             Task.FromResult(new Dictionary<Guid, List<WorklogHours>>());
 
-        /// <summary>Custo/hora por e-mail dos membros das equipes (T15).</summary>
-        protected virtual Task<IReadOnlyDictionary<string, decimal>> HourlyCostByEmailAsync() =>
-            Task.FromResult<IReadOnlyDictionary<string, decimal>>(new Dictionary<string, decimal>());
+        /// <summary>Issues não concluídas atribuídas aos e-mails (demanda do F9). Alimentado pelo Jira (T17).</summary>
+        protected virtual Task<List<OpenIssueDemand>> OpenIssuesForEmailsAsync(IReadOnlyCollection<string> emails) =>
+            Task.FromResult(new List<OpenIssueDemand>());
+
+        /// <summary>Worklogs do mês lançados pelos e-mails (utilização do F9). Alimentado pelo Jira (T17).</summary>
+        protected virtual Task<List<MonthWorklog>> WorklogsForEmailsAsync(IReadOnlyCollection<string> emails, int year, int month) =>
+            Task.FromResult(new List<MonthWorklog>());
+
+        /// <summary>
+        /// Custo/hora por e-mail dos membros das equipes (D13). Se o mesmo e-mail estiver em mais de uma
+        /// equipe com custos diferentes, usa a média.
+        /// </summary>
+        protected virtual async Task<IReadOnlyDictionary<string, decimal>> HourlyCostByEmailAsync()
+        {
+            var members = await _db.TeamUsers.AsNoTracking()
+                .Select(m => new { m.Email, m.HourlyCost })
+                .ToListAsync();
+            return members
+                .GroupBy(m => m.Email.Trim().ToLowerInvariant())
+                .ToDictionary(g => g.Key, g => g.Average(m => m.HourlyCost));
+        }
     }
 }

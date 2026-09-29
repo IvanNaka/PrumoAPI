@@ -26,6 +26,8 @@ namespace Plantonize.Plantao.Infrastructure
         public DbSet<CashFlowForecast> CashFlowForecasts => Set<CashFlowForecast>();
         public DbSet<RealizedReturn> RealizedReturns => Set<RealizedReturn>();
         public DbSet<ProjectDependency> ProjectDependencies => Set<ProjectDependency>();
+        public DbSet<Team> Teams => Set<Team>();
+        public DbSet<TeamUser> TeamUsers => Set<TeamUser>();
         public DbSet<ProjectEvaluation> ProjectEvaluations => Set<ProjectEvaluation>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)

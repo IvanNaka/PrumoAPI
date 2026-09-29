@@ -15,8 +15,6 @@ namespace Prumo.API.Extensions
             services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IPortfolioRepository,    PortfolioRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<ITeamRepository, TeamRepository>();
-            services.AddScoped<ITeamCapacityRepository, TeamCapacityRepository>();
             services.AddScoped<IRoadmapRepository, RoadmapRepository>();
 
 
@@ -38,7 +36,6 @@ namespace Prumo.API.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProjectDependencyService, ProjectDependencyService>();
             services.AddScoped<ITeamService, TeamService>();
-            services.AddScoped<ITeamCapacityService, TeamCapacityService>();
             services.AddScoped<IRoadmapService, RoadmapService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();

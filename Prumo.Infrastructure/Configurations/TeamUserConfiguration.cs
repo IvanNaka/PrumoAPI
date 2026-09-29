@@ -12,27 +12,26 @@ namespace Prumo.Infrastructure.Configurations
 
             builder.ToTable("TeamUsers");
 
-            // Use the typed composite key (no shadow properties)
-            builder.HasKey(tu => new { tu.TeamId, tu.UserId });
+            builder.HasKey(tu => tu.Id);
+            builder.Property(tu => tu.Id).HasColumnType("uuid");
 
-            builder.Property(tu => tu.TeamId)
-                .HasColumnType("uuid")
-                .IsRequired();
+            builder.Property(tu => tu.Name).HasMaxLength(150).IsRequired();
+            builder.Property(tu => tu.Email).HasMaxLength(200).IsRequired();
+            builder.Property(tu => tu.HourlyCost).HasColumnType("decimal(10,2)").IsRequired();
+            builder.Property(tu => tu.MonthlyCapacityHours).IsRequired();
 
-            builder.Property(tu => tu.UserId)
-                .HasColumnType("uuid")
-                .IsRequired();
+            builder.HasIndex(tu => tu.TeamId);
+            builder.HasIndex(tu => tu.Email);
 
-            // Relationships
             builder.HasOne(tu => tu.Team)
                 .WithMany(t => t.Members)
                 .HasForeignKey(tu => tu.TeamId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(tu => tu.User)
                 .WithMany(u => u.TeamMemberships)
                 .HasForeignKey(tu => tu.UserId)
-                .OnDelete(DeleteBehavior.NoAction);
+                .OnDelete(DeleteBehavior.SetNull);
         }
     }
 }
