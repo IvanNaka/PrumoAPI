@@ -1,20 +1,14 @@
-﻿using Prumo.Application.DTOs.Project;
-using Prumo.Domain.Entities;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Prumo.Application.DTOs.Project;
 
 namespace Prumo.Application.Interfaces
 {
+    // RF10–RF13, UC7, Figura 26.
     public interface IProjectService
     {
-        Task<IEnumerable<ProjetoResumoDto>> ListByPortfolioAsync(Guid portfolioId);
-        Task<ProjectDto> GetByIdAsync(Guid id);
-        Task<IEnumerable<ProjectDto>> GetAllAsync();
-        Task<IEnumerable<ProjectDto>> GetByPortfolioIdAsync(Guid portfolioId);
-        Task<IEnumerable<ProjectDto>> GetByOwnerIdAsync(Guid ownerId);
-        Task<ProjectDto> AddAsync(CreateProjectDTO project);
-        Task UpdateAsync(Project project);
-        Task DeleteAsync(Guid id);
+        Task<IEnumerable<ProjetoResumoDto>> ListByPortfolioAsync(Guid portfolioId, string? status = null, string? categoria = null);
+        Task<ProjetoDetalheDto> GetDetailAsync(Guid id);
+        Task<ProjetoDetalheDto> CreateAsync(Guid portfolioId, SalvarProjetoDto dto);
+        Task<ProjetoDetalheDto> UpdateAsync(Guid id, SalvarProjetoDto dto);
+        Task<ProjetoDetalheDto> ChangeStatusAsync(Guid id, string acao);
     }
 }

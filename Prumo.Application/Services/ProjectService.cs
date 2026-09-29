@@ -1,151 +1,273 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Prumo.Application.Common;
 using Prumo.Application.DTOs.Project;
 using Prumo.Application.Interfaces;
 using Prumo.Application.StateMachines;
 using Prumo.Domain.Entities;
-using Prumo.Domain.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Prumo.Domain.Enums;
 
 namespace Prumo.Application.Services
 {
+    // Projetos (RF10–RF13, RF22, UC7, Figura 26).
     public class ProjectService : IProjectService
     {
-        private readonly IProjectRepository _projectRepository;
-        private readonly IProjectEvaluationRepository _projectEvaluationRepository;
-        private readonly IPortfolioService _portfolioService;
         private readonly IAppDbContext _db;
         private readonly IPortfolioAccessService _access;
+        private readonly IPortfolioService _portfolioService;
+        private readonly IPrioritizationService _prioritization;
 
         public ProjectService(
-            IProjectRepository projectRepository,
-            IProjectEvaluationRepository projectEvaluationRepository,
-            IPortfolioService portfolioService,
             IAppDbContext db,
-            IPortfolioAccessService access)
+            IPortfolioAccessService access,
+            IPortfolioService portfolioService,
+            IPrioritizationService prioritization)
         {
-            _projectRepository = projectRepository;
-            _projectEvaluationRepository = projectEvaluationRepository;
-            _portfolioService = portfolioService;
             _db = db;
             _access = access;
+            _portfolioService = portfolioService;
+            _prioritization = prioritization;
         }
 
-        /// <summary>GET /portfolios/{id}/projetos — exige ser membro do portfólio.</summary>
-        public async Task<IEnumerable<ProjetoResumoDto>> ListByPortfolioAsync(Guid portfolioId)
+        /// <summary>GET /portfolios/{id}/projetos?status=&amp;categoria= — exige ser membro.</summary>
+        public async Task<IEnumerable<ProjetoResumoDto>> ListByPortfolioAsync(Guid portfolioId, string? status = null, string? categoria = null)
         {
             await _access.EnsureAccessAsync(portfolioId);
-            return await _db.Projects.AsNoTracking()
-                .Where(p => p.PortfolioId == portfolioId)
-                .OrderBy(p => p.Name)
-                .Select(p => new ProjetoResumoDto
-                {
-                    Id = p.Id,
-                    PortfolioId = p.PortfolioId,
-                    Nome = p.Name,
-                    Status = p.Status.ToString(),
-                    ResponsavelId = p.OwnerId,
-                    ResponsavelNome = p.Owner.Name,
-                    DataCriacao = p.CreatedDate,
-                })
-                .ToListAsync();
-        }
+            var query = _db.Projects.AsNoTracking().Where(p => p.PortfolioId == portfolioId);
 
-        public async Task<ProjectDto> GetByIdAsync(Guid id)
-        {
-            var project = await _projectRepository.GetByIdAsync(id);
-            if (project == null) return null;
-            return MapToDto(project);
-        }
-
-        public async Task<IEnumerable<ProjectDto>> GetAllAsync()
-        {
-            var projects = await _projectRepository.GetAllAsync();
-            return projects.Select(MapToDto);
-        }
-
-        public async Task<IEnumerable<ProjectDto>> GetByPortfolioIdAsync(Guid portfolioId)
-        {
-            var projects = await _projectRepository.GetByPortfolioIdAsync(portfolioId);
-            return projects.Select(MapToDto);
-        }
-
-        public async Task<IEnumerable<ProjectDto>> GetByOwnerIdAsync(Guid ownerId)
-        {
-            var projects = await _projectRepository.GetByOwnerIdAsync(ownerId);
-            return projects.Select(MapToDto);
-        }
-
-        public async Task<ProjectDto> AddAsync(CreateProjectDTO projectDTO)
-        {
-            var projectObject = new Project
+            if (!string.IsNullOrWhiteSpace(status) && Enum.TryParse<ProjectStatus>(status, true, out var s))
             {
-                PortfolioId = projectDTO.PortfolioId,
-                Name = projectDTO.Name,
-                Description = projectDTO.Description,
-                OwnerId = projectDTO.OwnerId,
-                CreatedDate = DateTime.UtcNow
-            };
-
-            var projectCreated = await _projectRepository.AddAsync(projectObject);
-
-            // Figura 27: Configurado -> EmAnalise no primeiro projeto.
-            await _portfolioService.ApplyAutomaticEventAsync(projectObject.PortfolioId, PortfolioStateMachine.PrimeiroProjeto);
-
-            if (projectDTO.CriteriaScores != null)
-            {
-                foreach (var evaluation in projectDTO.CriteriaScores)
-                {
-                    var ev = new ProjectEvaluation
-                    {
-                        PriorityCriteriaId = evaluation.PriorityCriteriaId,
-                        ProjectId = projectCreated.Id,
-                        UserId = projectDTO.OwnerId,
-                        Score = (int)evaluation.Value,
-                        CreatedDate = DateTime.UtcNow
-                    };
-                    await _projectEvaluationRepository.AddAsync(ev);
-                }
+                query = query.Where(p => p.Status == s);
             }
 
-            return MapToDto(projectCreated);
+            if (!string.IsNullOrWhiteSpace(categoria) && Enum.TryParse<StrategicCategory>(categoria, true, out var c))
+            {
+                query = query.Where(p => p.StrategicCategory == c);
+            }
+
+            var list = await query.Select(p => new ProjetoResumoDto
+            {
+                Id = p.Id,
+                PortfolioId = p.PortfolioId,
+                Nome = p.Name,
+                Status = p.Status.ToString(),
+                ResponsavelId = p.OwnerId,
+                ResponsavelNome = p.Owner.Name,
+                DataCriacao = p.CreatedDate,
+                CategoriaEstrategica = p.StrategicCategory.ToString(),
+                Prioridade = p.Priority.ToString(),
+                StatusAvaliacao = p.EvaluationStatus.ToString(),
+                ScoreAtual = p.CurrentScore,
+                PosicaoRanking = p.RankingPosition,
+                OrcamentoAprovado = p.ApprovedBudget,
+                DataInicio = p.StartDate,
+                DataFim = p.EndDate,
+            }).ToListAsync();
+
+            return list
+                .OrderBy(p => p.PosicaoRanking ?? int.MaxValue)
+                .ThenBy(p => p.Nome);
         }
 
-        public async Task UpdateAsync(Project project)
+        public async Task<ProjetoDetalheDto> GetDetailAsync(Guid id)
         {
-            await _projectRepository.UpdateAsync(project);
-        }
+            await _access.EnsureProjectAccessAsync(id);
 
-        public async Task DeleteAsync(Guid id)
-        {
-            await _projectRepository.DeleteAsync(id);
-        }
+            var project = await _db.Projects.AsNoTracking()
+                .Include(p => p.Owner)
+                .Include(p => p.Portfolio)
+                .Include(p => p.ProjectEvaluations).ThenInclude(e => e.User)
+                .SingleAsync(p => p.Id == id);
 
-        private ProjectDto MapToDto(Project project)
-        {
-            return new ProjectDto
+            var criteria = await _db.PriorityCriterias.AsNoTracking()
+                .Where(c => c.PortfolioId == project.PortfolioId)
+                .OrderBy(c => c.Name)
+                .ToListAsync();
+
+            return new ProjetoDetalheDto
             {
                 Id = project.Id,
                 PortfolioId = project.PortfolioId,
-                PortfolioName = project.Portfolio?.Name ,
-                Name = project.Name,
-                Description = project.Description,
+                PortfolioNome = project.Portfolio.Name,
+                PortfolioStatus = project.Portfolio.Status.ToString(),
+                Nome = project.Name,
+                Descricao = project.Description,
                 Status = project.Status.ToString(),
-                OwnerId = project.OwnerId,
-                OwnerName = project.Owner?.Name,
-                CreatedDate = project.CreatedDate,
-                ProjectEvaluations = project.ProjectEvaluations?.Select(pe => new Prumo.Application.DTOs.ProjectEvaluation.ProjectEvaluationDto
+                ResponsavelId = project.OwnerId,
+                ResponsavelNome = project.Owner.Name,
+                DataCriacao = project.CreatedDate,
+                CategoriaEstrategica = project.StrategicCategory.ToString(),
+                Prioridade = project.Priority.ToString(),
+                StatusAvaliacao = project.EvaluationStatus.ToString(),
+                ScoreAtual = project.CurrentScore,
+                PosicaoRanking = project.RankingPosition,
+                OrcamentoAprovado = project.ApprovedBudget,
+                DataInicio = project.StartDate,
+                DataFim = project.EndDate,
+                JiraProjectKey = project.JiraProjectKey,
+                DataConclusao = project.CompletedAt,
+                DataUltimaPriorizacao = project.LastPrioritizationDate,
+                AcoesPermitidas = ProjectStateMachine.AcoesPermitidas(project.Status).ToList(),
+                Avaliacoes = criteria.Select(c =>
                 {
-                    Id = pe.Id,
-                    PriorityCriteriaId = pe.PriorityCriteriaId,
-                    PriorityCriteriaName = pe.PriorityCriteria?.Name,
-                    UserId = pe.UserId,
-                    Value = pe.Score,
-                    Weight = pe.PriorityCriteria.ValueWeight
-                }).ToList()
+                    var nota = project.ProjectEvaluations.FirstOrDefault(e => e.PriorityCriteriaId == c.Id);
+                    return new NotaCriterioDto
+                    {
+                        CriterioId = c.Id,
+                        CriterioNome = c.Name,
+                        Peso = c.ValueWeight,
+                        Tipo = c.Type.ToString(),
+                        Nota = nota?.Score,
+                        AvaliadorNome = nota?.User?.Name,
+                        DataAvaliacao = nota?.EvaluatedAt,
+                    };
+                }).ToList(),
             };
+        }
+
+        public async Task<ProjetoDetalheDto> CreateAsync(Guid portfolioId, SalvarProjetoDto dto)
+        {
+            await _access.EnsureWriteAccessAsync(portfolioId);
+            var valid = await ValidateAsync(dto);
+
+            var project = new Project
+            {
+                PortfolioId = portfolioId,
+                Status = ProjectStatus.Rascunho,
+                EvaluationStatus = EvaluationStatus.NaoAvaliado,
+            };
+            Apply(project, valid);
+
+            _db.Projects.Add(project);
+            await _db.SaveChangesAsync();
+
+            // Figura 27: Configurado -> EmAnalise no primeiro projeto.
+            await _portfolioService.ApplyAutomaticEventAsync(portfolioId, PortfolioStateMachine.PrimeiroProjeto);
+
+            return await GetDetailAsync(project.Id);
+        }
+
+        public async Task<ProjetoDetalheDto> UpdateAsync(Guid id, SalvarProjetoDto dto)
+        {
+            await _access.EnsureProjectAccessAsync(id, write: true);
+            var project = await _db.Projects.SingleAsync(p => p.Id == id);
+
+            // Cancelado e Arquivado são estados finais: nenhuma edição de dados é permitida (RN22).
+            if (ProjectStateMachine.EhFinal(project.Status))
+            {
+                throw new BusinessRuleException(409, Messages.RN22_Transicao(project.Status, "Editar"));
+            }
+
+            var valid = await ValidateAsync(dto);
+            var priorityChanged = project.Priority != valid.Priority;
+            Apply(project, valid);
+            project.UpdatedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            if (priorityChanged)
+            {
+                // a prioridade é critério de desempate do ranking (F2)
+                await _prioritization.RecalculateIfNeededAsync(project.PortfolioId);
+            }
+
+            return await GetDetailAsync(id);
+        }
+
+        public async Task<ProjetoDetalheDto> ChangeStatusAsync(Guid id, string acao)
+        {
+            await _access.EnsureProjectAccessAsync(id, write: true);
+            var project = await _db.Projects.SingleAsync(p => p.Id == id);
+
+            project.Status = ProjectStateMachine.Aplicar(project.Status, NormalizeAction(acao));
+            if (project.Status == ProjectStatus.Concluido)
+            {
+                project.CompletedAt = DateTime.UtcNow;
+            }
+
+            project.UpdatedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+
+            // F3: mudança de status do projeto recalcula o ranking (Cancelado/Arquivado saem dele).
+            await _prioritization.RecalculateIfNeededAsync(project.PortfolioId);
+
+            return await GetDetailAsync(id);
+        }
+
+        private static string NormalizeAction(string? acao)
+        {
+            var value = acao?.Trim() ?? string.Empty;
+            return value.Length == 0 ? value : char.ToUpperInvariant(value[0]) + value[1..];
+        }
+
+        private record ValidProject(
+            string Name, string? Description, Guid OwnerId, DateOnly Start, DateOnly End, decimal Budget,
+            StrategicCategory Category, Priority Priority, string? JiraKey);
+
+        private async Task<ValidProject> ValidateAsync(SalvarProjetoDto dto)
+        {
+            var errors = new Dictionary<string, string[]>();
+            var nome = dto.Nome?.Trim() ?? string.Empty;
+            if (nome.Length == 0) errors["nome"] = new[] { "O nome é obrigatório." };
+            if (dto.ResponsavelId is null || dto.ResponsavelId == Guid.Empty) errors["responsavelId"] = new[] { "O responsável é obrigatório." };
+            if (dto.DataInicio is null) errors["dataInicio"] = new[] { "A data de início é obrigatória." };
+            if (dto.DataFim is null) errors["dataFim"] = new[] { "A data de término é obrigatória." };
+            if (dto.OrcamentoAprovado is null) errors["orcamentoAprovado"] = new[] { "O orçamento aprovado é obrigatório." };
+            if (string.IsNullOrWhiteSpace(dto.CategoriaEstrategica)) errors["categoriaEstrategica"] = new[] { "A categoria estratégica é obrigatória." };
+
+            if (errors.Count > 0)
+            {
+                throw new BusinessRuleException(400, Messages.RN04_CamposObrigatorios, errors);
+            }
+
+            if (dto.DataFim < dto.DataInicio)
+            {
+                throw new BusinessRuleException(400, Messages.RN12_DataFim);
+            }
+
+            if (dto.OrcamentoAprovado < 0)
+            {
+                throw new BusinessRuleException(400, "O orçamento aprovado deve ser maior ou igual a 0.");
+            }
+
+            if (!Enum.TryParse<StrategicCategory>(dto.CategoriaEstrategica, true, out var category) || !Enum.IsDefined(category))
+            {
+                throw new BusinessRuleException(400, "Categoria estratégica inválida. Use Run, Grow ou Transform.");
+            }
+
+            var priority = Priority.Media;
+            if (!string.IsNullOrWhiteSpace(dto.Prioridade) && (!Enum.TryParse(dto.Prioridade, true, out priority) || !Enum.IsDefined(priority)))
+            {
+                throw new BusinessRuleException(400, "Prioridade inválida.");
+            }
+
+            if (!await _db.Users.AnyAsync(u => u.Id == dto.ResponsavelId && u.IsActive))
+            {
+                throw Messages.NotFound("Responsável não encontrado.");
+            }
+
+            var jira = string.IsNullOrWhiteSpace(dto.JiraProjectKey) ? null : dto.JiraProjectKey.Trim().ToUpperInvariant();
+            return new ValidProject(
+                nome.Length > 150 ? nome[..150] : nome,
+                string.IsNullOrWhiteSpace(dto.Descricao) ? null : dto.Descricao.Trim(),
+                dto.ResponsavelId!.Value,
+                dto.DataInicio!.Value,
+                dto.DataFim!.Value,
+                Math.Round(dto.OrcamentoAprovado!.Value, 2),
+                category,
+                priority,
+                jira is { Length: > 50 } ? jira[..50] : jira);
+        }
+
+        private static void Apply(Project project, ValidProject v)
+        {
+            project.Name = v.Name;
+            project.Description = v.Description;
+            project.OwnerId = v.OwnerId;
+            project.StartDate = v.Start;
+            project.EndDate = v.End;
+            project.ApprovedBudget = v.Budget;
+            project.StrategicCategory = v.Category;
+            project.Priority = v.Priority;
+            project.JiraProjectKey = v.JiraKey;
         }
     }
 }

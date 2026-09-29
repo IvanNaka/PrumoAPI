@@ -91,7 +91,11 @@ namespace Prumo.Tests.Api
             Assert.Equal("Configurado", await StatusAsync(portfolio.Id));
 
             // Configurado -> EmAnalise (primeiro projeto, automático)
-            var projeto = await client.PostAsJsonAsync("/api/Projects", new { name = "P1", portfolioId = portfolio.Id });
+            var projeto = await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/projetos", new
+            {
+                nome = "P1", responsavelId = admin.Id, dataInicio = "2026-01-01", dataFim = "2026-12-31",
+                orcamentoAprovado = 1000, categoriaEstrategica = "Run",
+            });
             Assert.True(projeto.IsSuccessStatusCode);
             Assert.Equal("EmAnalise", await StatusAsync(portfolio.Id));
 

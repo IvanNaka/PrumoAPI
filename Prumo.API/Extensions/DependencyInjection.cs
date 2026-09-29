@@ -13,10 +13,8 @@ namespace Prumo.API.Extensions
         {
             // Domain-specific repositories
             services.AddScoped<IProjectRepository, ProjectRepository>();
-            services.AddScoped<IProjectRepository, ProjectRepository>();
             services.AddScoped<IPortfolioRepository,    PortfolioRepository>();
             services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IProjectEvaluationRepository, ProjectEvaluationRepository>();
             services.AddScoped<IProjectDependencyRepository, ProjectDependencyRepository>();
             services.AddScoped<ITeamRepository, TeamRepository>();
             services.AddScoped<IBudgetRepository, BudgetRepository>();
@@ -37,7 +35,6 @@ namespace Prumo.API.Extensions
             services.AddScoped<IPriorityCriteriaService, PriorityCriteriaService>();
             services.AddScoped<IPrioritizationService, PrioritizationService>();
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IProjectEvaluationService, ProjectEvaluationService>();
             services.AddScoped<IProjectDependencyService, ProjectDependencyService>();
             services.AddScoped<ITeamService, TeamService>();
             services.AddScoped<IBudgetService, BudgetService>();

@@ -1,19 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
-using Prumo.API.Authorization;
-using System;
-using System.Collections.Generic;
-using System.Security.Claims;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Prumo.API.Authorization;
 using Prumo.Application.DTOs.Project;
 using Prumo.Application.Interfaces;
-using Prumo.Domain.Entities;
 
 namespace Prumo.API.Controllers
 {
+    // Projetos (RF10–RF13, UC7, Figura 26).
     [ApiController]
     [Authorize]
-    [Route("api/[controller]")]
+    [Route("api")]
     public class ProjectsController : ControllerBase
     {
         private readonly IProjectService _projectService;
@@ -23,89 +19,39 @@ namespace Prumo.API.Controllers
             _projectService = projectService;
         }
 
-        [HttpGet("/api/portfolios/{portfolioId:guid}/projetos")]
-        public async Task<ActionResult<IEnumerable<ProjetoResumoDto>>> ListByPortfolio(Guid portfolioId)
+        [HttpGet("portfolios/{portfolioId:guid}/projetos")]
+        public async Task<ActionResult<IEnumerable<ProjetoResumoDto>>> List(Guid portfolioId, [FromQuery] string? status, [FromQuery] string? categoria)
         {
-            return Ok(await _projectService.ListByPortfolioAsync(portfolioId));
+            return Ok(await _projectService.ListByPortfolioAsync(portfolioId, status, categoria));
         }
 
-        [HttpGet("{id:guid}")]
-        public async Task<ActionResult<ProjectDto>> GetById(Guid id)
+        [HttpGet("projetos/{id:guid}")]
+        public async Task<ActionResult<ProjetoDetalheDto>> GetById(Guid id)
         {
-            var project = await _projectService.GetByIdAsync(id);
-            if (project == null)
-            {
-                return NotFound();
-            }
-            return Ok(project);
+            return Ok(await _projectService.GetDetailAsync(id));
         }
 
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetAll()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            if (!Guid.TryParse(userId, out var userIdGuid))
-            {
-                return Unauthorized("User id claim is missing or invalid.");
-            }
-            var projects = await _projectService.GetByOwnerIdAsync(userIdGuid);
-            return Ok(projects);
-        }
-
-        [HttpGet("portfolio/{portfolioId:guid}")]
-        public async Task<ActionResult<IEnumerable<ProjectDto>>> GetByPortfolioId(Guid portfolioId)
-        {
-            var projects = await _projectService.GetByPortfolioIdAsync(portfolioId);
-            return Ok(projects);
-        }
-
+        [HttpPost("portfolios/{portfolioId:guid}/projetos")]
         [Authorize(Policy = Policies.EditarProjetos)]
-        [HttpPost]
-        public async Task<ActionResult<ProjectDto>> Create([FromBody] CreateProjectDTO project)
+        public async Task<ActionResult<ProjetoDetalheDto>> Create(Guid portfolioId, [FromBody] SalvarProjetoDto dto)
         {
-            if (project == null)
-            {
-                return BadRequest();
-            }
-
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
-            if (!Guid.TryParse(userId, out var userIdGuid))
-            {
-                return Unauthorized("User id claim is missing or invalid.");
-            }
-
-            project.OwnerId = userIdGuid;
-
-            var createdProject = await _projectService.AddAsync(project);
-
-            return CreatedAtAction(nameof(GetById), new { id = createdProject.Id }, createdProject);
+            var created = await _projectService.CreateAsync(portfolioId, dto);
+            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
+        [HttpPut("projetos/{id:guid}")]
         [Authorize(Policy = Policies.EditarProjetos)]
-        [HttpPut("{id:guid}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] Project project)
+        public async Task<ActionResult<ProjetoDetalheDto>> Update(Guid id, [FromBody] SalvarProjetoDto dto)
         {
-            if (project == null || project.Id != id)
-            {
-                return BadRequest();
-            }
-
-            await _projectService.UpdateAsync(project);
-            return NoContent();
+            return Ok(await _projectService.UpdateAsync(id, dto));
         }
 
+        /// <summary>Muda o status do projeto: { acao } — uma das ações da Figura 26 (ou Cancelar).</summary>
+        [HttpPost("projetos/{id:guid}/status")]
         [Authorize(Policy = Policies.EditarProjetos)]
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> Delete(Guid id)
+        public async Task<ActionResult<ProjetoDetalheDto>> ChangeStatus(Guid id, [FromBody] AlterarStatusProjetoDto dto)
         {
-            var existingProject = await _projectService.GetByIdAsync(id);
-            if (existingProject == null)
-            {
-                return NotFound();
-            }
-
-            await _projectService.DeleteAsync(id);
-            return NoContent();
+            return Ok(await _projectService.ChangeStatusAsync(id, dto?.Acao ?? string.Empty));
         }
     }
 }
