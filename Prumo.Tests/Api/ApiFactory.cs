@@ -64,6 +64,12 @@ namespace Prumo.Tests.Api
                 {
                     services.Remove(descriptor);
                 }
+                // O job diário (07:00) não roda nos testes: as regras e a expiração são chamadas diretamente.
+                foreach (var descriptor in services.Where(d => d.ImplementationType == typeof(Prumo.API.BackgroundServices.DailyNotificationJob)).ToList())
+                {
+                    services.Remove(descriptor);
+                }
+
                 services.AddSingleton<FakeJiraProvider>();
                 services.AddSingleton<IIntegrationProvider>(sp => sp.GetRequiredService<FakeJiraProvider>());
             });

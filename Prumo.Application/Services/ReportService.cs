@@ -134,7 +134,7 @@ namespace Prumo.Application.Services
                 Colunas = { "Posição", "Projeto", "Score", "Prioridade", "Categoria", "Status" },
                 Linhas = ranking.Ranking.Select(r => new List<string>
                 {
-                    r.Posicao.ToString(PtBr), r.Nome, Num(r.Score), r.Prioridade, r.Categoria, r.Status,
+                    r.Posicao.ToString(PtBr), r.Nome, Num(r.Score), Rotulo(r.Prioridade), r.Categoria, Rotulo(r.Status),
                 }).ToList(),
                 Vazio = "Nenhum projeto priorizado.",
             });
@@ -157,7 +157,7 @@ namespace Prumo.Application.Services
                     {
                         p.Name,
                         p.Owner?.Name ?? "",
-                        p.Status.ToString(),
+                        Rotulo(p.Status),
                         p.StrategicCategory.ToString(),
                         Brl(p.ApprovedBudget),
                         Brl(burn.CustoRealizado),
@@ -177,7 +177,7 @@ namespace Prumo.Application.Services
                 Colunas = { "Projeto", "Depende de", "Status do dependido", "Motivo" },
                 Linhas = dependencias.Select(d => new List<string>
                 {
-                    d.ProjetoOrigemNome, d.ProjetoDestinoNome, d.ProjetoDestinoStatus, d.Motivo ?? "",
+                    d.ProjetoOrigemNome, d.ProjetoDestinoNome, Rotulo(d.ProjetoDestinoStatus), d.Motivo ?? "",
                 }).ToList(),
                 Vazio = "Nenhuma dependência em risco.",
             });
@@ -227,7 +227,7 @@ namespace Prumo.Application.Services
                 Colunas = { "Posição", "Projeto", "Score", "Prioridade", "Categoria" },
                 Linhas = ranking.Ranking.Take(5).Select(r => new List<string>
                 {
-                    r.Posicao.ToString(PtBr), r.Nome, Num(r.Score), r.Prioridade, r.Categoria,
+                    r.Posicao.ToString(PtBr), r.Nome, Num(r.Score), Rotulo(r.Prioridade), r.Categoria,
                 }).ToList(),
                 Vazio = "Nenhum projeto priorizado.",
             });
@@ -238,7 +238,7 @@ namespace Prumo.Application.Services
                 Colunas = { "Projeto", "Status", "Pontuação de saúde", "Motivos" },
                 Linhas = d.Saude.Projetos
                     .Where(p => p.Classificacao == HealthCalculator.Critico)
-                    .Select(p => new List<string> { p.Nome, p.Status, p.PontuacaoSaude.ToString(PtBr), string.Join("; ", p.Flags) })
+                    .Select(p => new List<string> { p.Nome, Rotulo(p.Status), p.PontuacaoSaude.ToString(PtBr), string.Join("; ", p.Flags) })
                     .ToList(),
                 Vazio = "Nenhum projeto crítico.",
             });
@@ -274,7 +274,7 @@ namespace Prumo.Application.Services
                 .GroupBy(a => new { a.Type, a.Message })
                 .Select(g => new { g.Key.Type, g.Key.Message, Data = g.Max(a => a.CreatedDate) })
                 .OrderByDescending(a => a.Data)
-                .Select(a => new List<string> { a.Type.ToString(), a.Message, a.Data.ToString("dd/MM/yyyy HH:mm", PtBr) })
+                .Select(a => new List<string> { Rotulo(a.Type), a.Message, a.Data.ToString("dd/MM/yyyy HH:mm", PtBr) })
                 .ToList();
         }
 
@@ -283,9 +283,25 @@ namespace Prumo.Application.Services
             new("Portfólio", portfolio.Name),
             new("Objetivo", string.IsNullOrWhiteSpace(portfolio.Goal) ? "—" : portfolio.Goal!),
             new("Responsável", portfolio.Owner?.Name ?? "—"),
-            new("Status", portfolio.Status.ToString()),
+            new("Status", Rotulo(portfolio.Status)),
             new("Gerado em", DateTime.UtcNow.ToString("dd/MM/yyyy HH:mm", PtBr) + " (UTC)"),
         };
+
+        /// <summary>Rótulos em português dos valores de enum exibidos nos relatórios.</summary>
+        private static readonly Dictionary<string, string> Rotulos = new()
+        {
+            ["EmAndamento"] = "Em andamento", ["EmRisco"] = "Em risco", ["Concluido"] = "Concluído",
+            ["EmAnalise"] = "Em análise", ["Reavaliacao"] = "Reavaliação",
+            ["Media"] = "Média", ["Critica"] = "Crítica",
+            ["EstouroOrcamento"] = "Estouro de orçamento",
+            ["NaoAvaliado"] = "Não avaliado",
+        };
+
+        private static string Rotulo(object valor)
+        {
+            var texto = valor.ToString() ?? string.Empty;
+            return Rotulos.TryGetValue(texto, out var rotulo) ? rotulo : texto;
+        }
 
         private static string Num(decimal valor) => valor.ToString("#,##0.##", PtBr);
 

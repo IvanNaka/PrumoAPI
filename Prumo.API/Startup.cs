@@ -171,6 +171,12 @@ namespace Prumo.API
 
             AdminSeeder.SeedAsync(app.ApplicationServices).GetAwaiter().GetResult();
 
+            // Dados de validação do Cap. 4 (T25): só com PRUMO_SEED_VALIDACAO=true.
+            if (SeedValidacao.Habilitado(Configuration))
+            {
+                SeedValidacao.SeedAsync(app.ApplicationServices).GetAwaiter().GetResult();
+            }
+
             app.UseHealthChecks("/");
             app.UseEndpoints(endpoints =>
             {

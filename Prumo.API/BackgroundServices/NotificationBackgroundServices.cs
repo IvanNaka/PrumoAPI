@@ -86,22 +86,28 @@ namespace Prumo.API.BackgroundServices
             _logger = logger;
         }
 
-        /// <summary>Próxima ocorrência das 07:00 depois de <paramref name="agora"/> (hora local).</summary>
-        public static DateTime ProximaExecucao(DateTime agora)
-        {
-            var hoje = agora.Date.Add(Horario.ToTimeSpan());
-            return agora < hoje ? hoje : hoje.AddDays(1);
-        }
+        /// <summary>
+        /// Deve rodar agora? Sim quando já passou das 07:00 (hora local) e o job ainda não rodou nesta data.
+        /// Se a API subir depois das 07:00, o job do dia roda no primeiro minuto (a deduplicação evita repetição).
+        /// </summary>
+        public static bool DeveExecutar(DateTime agora, DateOnly? ultimaExecucao) =>
+            TimeOnly.FromDateTime(agora) >= Horario && ultimaExecucao != DateOnly.FromDateTime(agora);
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            DateOnly? ultimaExecucao = null;
+            using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
             try
             {
-                while (!stoppingToken.IsCancellationRequested)
+                while (await timer.WaitForNextTickAsync(stoppingToken))
                 {
                     var agora = DateTime.Now;
-                    await Task.Delay(ProximaExecucao(agora) - agora, stoppingToken);
+                    if (!DeveExecutar(agora, ultimaExecucao))
+                    {
+                        continue;
+                    }
 
+                    ultimaExecucao = DateOnly.FromDateTime(agora);
                     try
                     {
                         using var scope = _scopeFactory.CreateScope();

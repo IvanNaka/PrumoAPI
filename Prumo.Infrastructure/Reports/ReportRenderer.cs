@@ -51,7 +51,7 @@ namespace Prumo.Infrastructure.Reports
                     {
                         foreach (var secao in document.Secoes)
                         {
-                            col.Item().PaddingTop(12).PaddingBottom(4).Text(secao.Titulo).FontSize(12).Bold();
+                            col.Item().EnsureSpace(90).PaddingTop(12).PaddingBottom(4).Text(secao.Titulo).FontSize(12).Bold();
                             if (secao.Linhas.Count == 0)
                             {
                                 col.Item().Text(secao.Vazio).Italic().FontColor(Colors.Grey.Darken1);
