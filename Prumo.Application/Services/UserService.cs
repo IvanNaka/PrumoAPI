@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 using Prumo.Application.Common;
 using Prumo.Application.DTOs.User;
@@ -31,9 +32,19 @@ namespace Prumo.Application.Services
             return users.Select(MapToDto);
         }
 
+        public async Task<IEnumerable<UserOptionDto>> GetActiveOptionsAsync()
+        {
+            return await _db.Users.AsNoTracking()
+                .Where(u => u.IsActive)
+                .OrderBy(u => u.Name)
+                .Select(u => new UserOptionDto { Id = u.Id, Nome = u.Name, Email = u.Email })
+                .ToListAsync();
+        }
+
         public async Task<UserDto> CreateAsync(CreateUserDto dto)
         {
             var email = (dto.Email ?? string.Empty).Trim().ToLowerInvariant();
+            ValidateRequired(dto.Nome, email, validateEmail: true);
             var roles = ParseRoles(dto.Perfis);
 
             if (await _db.Users.AnyAsync(u => u.Email == email))
@@ -61,6 +72,7 @@ namespace Prumo.Application.Services
         {
             var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == id)
                 ?? throw Messages.NotFound("Usuário não encontrado.");
+            ValidateRequired(dto.Nome, user.Email, validateEmail: false);
             var roles = ParseRoles(dto.Perfis);
 
             user.Name = dto.Nome.Trim();
@@ -93,6 +105,34 @@ namespace Prumo.Application.Services
             user.UpdatedDate = DateTime.UtcNow;
             await _db.SaveChangesAsync();
         }
+
+        private static void ValidateRequired(string? nome, string email, bool validateEmail)
+        {
+            var errors = new Dictionary<string, string[]>();
+            if (string.IsNullOrWhiteSpace(nome))
+            {
+                errors["nome"] = new[] { "O nome é obrigatório." };
+            }
+
+            if (validateEmail && string.IsNullOrWhiteSpace(email))
+            {
+                errors["email"] = new[] { "O e-mail é obrigatório." };
+            }
+
+            if (errors.Count > 0)
+            {
+                throw new BusinessRuleException(400, Messages.RN04_CamposObrigatorios, errors);
+            }
+
+            if (validateEmail && !IsValidEmail(email))
+            {
+                throw new BusinessRuleException(400, "Informe um e-mail válido.",
+                    new Dictionary<string, string[]> { ["email"] = new[] { "Informe um e-mail válido." } });
+            }
+        }
+
+        private static bool IsValidEmail(string email) =>
+            email.Length <= 200 && Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
 
         private static List<RoleName> ParseRoles(IEnumerable<string>? perfis)
         {
