@@ -48,6 +48,7 @@ namespace Prumo.API.Extensions
             services.AddScoped<IPortfolioIndicator, LeadTimeIndicator>();
             services.AddScoped<IPortfolioIndicator, NPVIndicator>();
             services.AddScoped<IPortfolioIndicator, OkrAlignmentIndicator>();
+            services.AddScoped<IDashboardService, DashboardService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProjectDependencyService, ProjectDependencyService>();
             services.AddScoped<ITeamService, TeamService>();
