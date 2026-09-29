@@ -83,6 +83,12 @@ namespace Prumo.Application.Services
                 .OrderBy(c => c.Name)
                 .ToListAsync();
 
+            var okrs = await _db.Objectives.AsNoTracking()
+                .Include(o => o.KeyResults)
+                .Where(o => o.Projects.Any(po => po.ProjectId == id))
+                .OrderBy(o => o.Title)
+                .ToListAsync();
+
             return new ProjetoDetalheDto
             {
                 Id = project.Id,
@@ -107,6 +113,12 @@ namespace Prumo.Application.Services
                 DataConclusao = project.CompletedAt,
                 DataUltimaPriorizacao = project.LastPrioritizationDate,
                 AcoesPermitidas = ProjectStateMachine.AcoesPermitidas(project.Status).ToList(),
+                Okrs = okrs.Select(o => new Prumo.Application.DTOs.Okr.OkrResumoDto
+                {
+                    Id = o.Id,
+                    Titulo = o.Title,
+                    Progresso = OkrService.Map(o).Progresso,
+                }).ToList(),
                 Avaliacoes = criteria.Select(c =>
                 {
                     var nota = project.ProjectEvaluations.FirstOrDefault(e => e.PriorityCriteriaId == c.Id);

@@ -10,5 +10,13 @@ namespace Prumo.Application.Interfaces
         Task<OkrDto> CreateAsync(SalvarOkrDto dto);
         Task<OkrDto> UpdateAsync(Guid id, SalvarOkrDto dto);
         Task<KeyResultDto> UpdateKeyResultValueAsync(Guid keyResultId, decimal? valorAtual);
+
+        // Associações (RF16, UC9) — repetir uma associação é idempotente.
+        Task<IEnumerable<OkrResumoDto>> GetProjectOkrsAsync(Guid projectId);
+        Task LinkProjectAsync(Guid projectId, Guid okrId);
+        Task UnlinkProjectAsync(Guid projectId, Guid okrId);
+        Task<IEnumerable<OkrDto>> GetPortfolioOkrsAsync(Guid portfolioId);
+        Task LinkPortfolioAsync(Guid portfolioId, Guid okrId);
+        Task UnlinkPortfolioAsync(Guid portfolioId, Guid okrId);
     }
 }

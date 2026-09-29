@@ -18,6 +18,9 @@ namespace Prumo.Application.DTOs.Project
 
         /// <summary>Notas por critério (1 a 5); nota nula = ainda não avaliado naquele critério.</summary>
         public List<NotaCriterioDto> Avaliacoes { get; set; } = new();
+
+        /// <summary>OKRs associados (RF16) com o progresso F4.</summary>
+        public List<Prumo.Application.DTOs.Okr.OkrResumoDto> Okrs { get; set; } = new();
     }
 
     public class NotaCriterioDto

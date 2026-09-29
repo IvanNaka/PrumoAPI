@@ -54,5 +54,51 @@ namespace Prumo.API.Controllers
         {
             return Ok(await _service.UpdateKeyResultValueAsync(id, dto?.ValorAtual));
         }
+
+        // ---------- Associações (RF16, UC9) ----------
+
+        [HttpGet("projetos/{projetoId:guid}/okrs")]
+        public async Task<ActionResult<IEnumerable<OkrResumoDto>>> GetProjectOkrs(Guid projetoId)
+        {
+            return Ok(await _service.GetProjectOkrsAsync(projetoId));
+        }
+
+        [HttpPost("projetos/{projetoId:guid}/okrs/{okrId:guid}")]
+        [Authorize(Policy = Policies.EditarOkrs)]
+        public async Task<IActionResult> LinkProject(Guid projetoId, Guid okrId)
+        {
+            await _service.LinkProjectAsync(projetoId, okrId);
+            return NoContent();
+        }
+
+        [HttpDelete("projetos/{projetoId:guid}/okrs/{okrId:guid}")]
+        [Authorize(Policy = Policies.EditarOkrs)]
+        public async Task<IActionResult> UnlinkProject(Guid projetoId, Guid okrId)
+        {
+            await _service.UnlinkProjectAsync(projetoId, okrId);
+            return NoContent();
+        }
+
+        [HttpGet("portfolios/{portfolioId:guid}/okrs")]
+        public async Task<ActionResult<IEnumerable<OkrDto>>> GetPortfolioOkrs(Guid portfolioId)
+        {
+            return Ok(await _service.GetPortfolioOkrsAsync(portfolioId));
+        }
+
+        [HttpPost("portfolios/{portfolioId:guid}/okrs/{okrId:guid}")]
+        [Authorize(Policy = Policies.EditarOkrs)]
+        public async Task<IActionResult> LinkPortfolio(Guid portfolioId, Guid okrId)
+        {
+            await _service.LinkPortfolioAsync(portfolioId, okrId);
+            return NoContent();
+        }
+
+        [HttpDelete("portfolios/{portfolioId:guid}/okrs/{okrId:guid}")]
+        [Authorize(Policy = Policies.EditarOkrs)]
+        public async Task<IActionResult> UnlinkPortfolio(Guid portfolioId, Guid okrId)
+        {
+            await _service.UnlinkPortfolioAsync(portfolioId, okrId);
+            return NoContent();
+        }
     }
 }

@@ -11,10 +11,12 @@ namespace Prumo.Application.Services
     public class OkrService : IOkrService
     {
         private readonly IAppDbContext _db;
+        private readonly IPortfolioAccessService _access;
 
-        public OkrService(IAppDbContext db)
+        public OkrService(IAppDbContext db, IPortfolioAccessService access)
         {
             _db = db;
+            _access = access;
         }
 
         public async Task<IEnumerable<OkrDto>> GetAllAsync()
@@ -103,6 +105,81 @@ namespace Prumo.Application.Services
             kr.UpdatedDate = DateTime.UtcNow;
             await _db.SaveChangesAsync();
             return MapKr(kr);
+        }
+
+        public async Task<IEnumerable<OkrResumoDto>> GetProjectOkrsAsync(Guid projectId)
+        {
+            await _access.EnsureProjectAccessAsync(projectId);
+            var okrs = await _db.Objectives.AsNoTracking()
+                .Include(o => o.KeyResults)
+                .Where(o => o.Projects.Any(po => po.ProjectId == projectId))
+                .OrderBy(o => o.Title)
+                .ToListAsync();
+            return okrs.Select(o => new OkrResumoDto { Id = o.Id, Titulo = o.Title, Progresso = Map(o).Progresso });
+        }
+
+        public async Task LinkProjectAsync(Guid projectId, Guid okrId)
+        {
+            await _access.EnsureProjectAccessAsync(projectId, write: true);
+            await EnsureOkrExistsAsync(okrId);
+            if (!await _db.ProjectObjectives.AnyAsync(po => po.ProjectId == projectId && po.ObjectiveId == okrId))
+            {
+                _db.ProjectObjectives.Add(new ProjectObjective { ProjectId = projectId, ObjectiveId = okrId });
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task UnlinkProjectAsync(Guid projectId, Guid okrId)
+        {
+            await _access.EnsureProjectAccessAsync(projectId, write: true);
+            var link = await _db.ProjectObjectives.SingleOrDefaultAsync(po => po.ProjectId == projectId && po.ObjectiveId == okrId);
+            if (link != null)
+            {
+                _db.ProjectObjectives.Remove(link);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task<IEnumerable<OkrDto>> GetPortfolioOkrsAsync(Guid portfolioId)
+        {
+            await _access.EnsureAccessAsync(portfolioId);
+            var okrs = await _db.Objectives.AsNoTracking()
+                .Include(o => o.KeyResults)
+                .Where(o => _db.PortfolioObjectives.Any(po => po.PortfolioId == portfolioId && po.ObjectiveId == o.Id))
+                .OrderBy(o => o.Title)
+                .ToListAsync();
+            return okrs.Select(o => Map(o));
+        }
+
+        public async Task LinkPortfolioAsync(Guid portfolioId, Guid okrId)
+        {
+            await _access.EnsureWriteAccessAsync(portfolioId);
+            await EnsureOkrExistsAsync(okrId);
+            if (!await _db.PortfolioObjectives.AnyAsync(po => po.PortfolioId == portfolioId && po.ObjectiveId == okrId))
+            {
+                _db.PortfolioObjectives.Add(new PortfolioObjective { PortfolioId = portfolioId, ObjectiveId = okrId });
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task UnlinkPortfolioAsync(Guid portfolioId, Guid okrId)
+        {
+            await _access.EnsureWriteAccessAsync(portfolioId);
+            var link = await _db.PortfolioObjectives.SingleOrDefaultAsync(po => po.PortfolioId == portfolioId && po.ObjectiveId == okrId);
+            if (link != null)
+            {
+                _db.PortfolioObjectives.Remove(link);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        /// <summary>RN14: OKR não encontrado ao associar.</summary>
+        private async Task EnsureOkrExistsAsync(Guid okrId)
+        {
+            if (!await _db.Objectives.AnyAsync(o => o.Id == okrId))
+            {
+                throw Messages.NotFound(Messages.RN14_OkrNaoEncontrado);
+            }
         }
 
         private static void Validate(SalvarOkrDto dto)
