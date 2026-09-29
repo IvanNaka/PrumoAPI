@@ -24,6 +24,7 @@ namespace Prumo.Application.Interfaces
         DbSet<BusinessCase> BusinessCases { get; }
         DbSet<CashFlowForecast> CashFlowForecasts { get; }
         DbSet<RealizedReturn> RealizedReturns { get; }
+        DbSet<ProjectDependency> ProjectDependencies { get; }
         DbSet<ProjectEvaluation> ProjectEvaluations { get; }
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

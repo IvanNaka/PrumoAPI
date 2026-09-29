@@ -89,8 +89,12 @@ namespace Prumo.Application.Services
                 .OrderBy(o => o.Title)
                 .ToListAsync();
 
+            var dependencias = await ProjectDependencyService.LoadAsync(
+                _db.ProjectDependencies.Where(d => d.ProjectId == id || d.DependsOnProjectId == id));
+
             return new ProjetoDetalheDto
             {
+                Dependencias = dependencias,
                 Id = project.Id,
                 PortfolioId = project.PortfolioId,
                 PortfolioNome = project.Portfolio.Name,

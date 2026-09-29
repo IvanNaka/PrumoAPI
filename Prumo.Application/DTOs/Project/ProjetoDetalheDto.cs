@@ -21,6 +21,9 @@ namespace Prumo.Application.DTOs.Project
 
         /// <summary>OKRs associados (RF16) com o progresso F4.</summary>
         public List<Prumo.Application.DTOs.Okr.OkrResumoDto> Okrs { get; set; } = new();
+
+        /// <summary>Dependências em que o projeto é origem ou destino, com o risco (F13).</summary>
+        public List<Prumo.Application.DTOs.Dependency.DependenciaDto> Dependencias { get; set; } = new();
     }
 
     public class NotaCriterioDto
