@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Security.Cryptography;
 
 namespace Prumo.Domain.Entities
 {
@@ -19,6 +20,16 @@ namespace Prumo.Domain.Entities
         public Guid? OwnerUserId { get; set; }
         public User? OwnerUser { get; set; }
 
+        /// <summary>Código de convite: quem ainda não participa do Prumo entra na equipe informando-o.</summary>
+        public string InviteCode { get; set; } = NewInviteCode();
+
         public ICollection<TeamUser> Members { get; set; } = new List<TeamUser>();
+
+        // Sem caracteres ambíguos (0/O, 1/I/L).
+        private const string InviteAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+        public const int InviteCodeLength = 8;
+
+        public static string NewInviteCode() =>
+            RandomNumberGenerator.GetString(InviteAlphabet, InviteCodeLength);
     }
 }

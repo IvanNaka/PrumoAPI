@@ -162,11 +162,11 @@ namespace Prumo.Tests.Api
 
         private class FakeGoogleValidator : IGoogleTokenValidator
         {
-            public Task<string> ValidateAndGetEmailAsync(string idToken) => idToken switch
+            public Task<GoogleUserInfo> ValidateAsync(string idToken) => idToken switch
             {
                 "invalido" => throw new InvalidJwtException("token inválido"),
                 "offline" => throw new HttpRequestException("sem rede"),
-                _ => Task.FromResult(idToken),
+                _ => Task.FromResult(new GoogleUserInfo(idToken, "Nome " + idToken.Split('@')[0])),
             };
         }
     }

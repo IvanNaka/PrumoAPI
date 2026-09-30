@@ -47,13 +47,49 @@ namespace Prumo.Tests.Api
         }
 
         [Fact]
-        public async Task EmailNaoCadastrado_Recebe403ComRN03()
+        public async Task EmailNaoCadastrado_EntraSemPerfil_ESoAcessaOOnboarding()
         {
-            var response = await _factory.CreateClient().PostAsJsonAsync("/api/auth/google", new { idToken = "desconhecido@prumo.dev" });
+            var client = _factory.CreateClient();
 
-            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-            Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-            Assert.Equal("Usuário sem permissão de acesso ao Prumo.", await DetailAsync(response));
+            var response = await client.PostAsJsonAsync("/api/auth/google", new { idToken = "Novo@Prumo.dev" });
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+            var usuario = body.GetProperty("usuario");
+            Assert.Equal("novo@prumo.dev", usuario.GetProperty("email").GetString());
+            Assert.Equal("Nome Novo", usuario.GetProperty("nome").GetString());
+            Assert.Empty(usuario.GetProperty("perfis").EnumerateArray());
+
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", body.GetProperty("token").GetString());
+            Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/auth/me")).StatusCode);
+
+            var portfolios = await client.GetAsync("/api/portfolios");
+            Assert.Equal(HttpStatusCode.Forbidden, portfolios.StatusCode);
+            Assert.Equal("Entre em uma equipe ou crie uma para acessar o Prumo.", await DetailAsync(portfolios));
+
+            // O segundo login reaproveita o usuário criado no primeiro.
+            var again = await _factory.CreateClient().PostAsJsonAsync("/api/auth/google", new { idToken = "novo@prumo.dev" });
+            var againBody = await again.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(usuario.GetProperty("id").GetGuid(), againBody.GetProperty("usuario").GetProperty("id").GetGuid());
+        }
+
+        [Fact]
+        public async Task EmailNaoCadastradoJaMembroDeEquipe_EntraComoDesenvolvedor()
+        {
+            var team = new Prumo.Domain.Entities.Team { Name = "Equipe " + Guid.NewGuid().ToString("N")[..6] };
+            team.Members.Add(new Prumo.Domain.Entities.TeamUser
+            {
+                TeamId = team.Id, Name = "Membro", Email = "membro-previo@prumo.dev", HourlyCost = 10, MonthlyCapacityHours = 100,
+            });
+            await _factory.WithDbAsync(async db => { db.Teams.Add(team); await db.SaveChangesAsync(); });
+
+            var response = await _factory.CreateClient().PostAsJsonAsync("/api/auth/google", new { idToken = "membro-previo@prumo.dev" });
+
+            var body = await response.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(new[] { "Desenvolvedor" }, body.GetProperty("usuario").GetProperty("perfis").EnumerateArray().Select(p => p.GetString()));
+            var userId = body.GetProperty("usuario").GetProperty("id").GetGuid();
+            var linked = await _factory.WithDbAsync(db => Task.FromResult(db.TeamUsers.Single(m => m.TeamId == team.Id).UserId));
+            Assert.Equal(userId, linked);
         }
 
         [Fact]

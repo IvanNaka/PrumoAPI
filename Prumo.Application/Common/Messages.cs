@@ -34,6 +34,11 @@ namespace Prumo.Application.Common
         public const string RN28_LancamentoInvalido = "Lançamento inválido: valor deve ser positivo e data não pode ser futura.";
         public const string RN29_SomentePriorizados = "Apenas projetos priorizados podem ser aprovados ou rejeitados.";
 
+        // Acesso inicial: usuário sem perfil só pode entrar em uma equipe (código de convite) ou criar uma.
+        public const string SemEquipe = "Entre em uma equipe ou crie uma para acessar o Prumo.";
+        public const string CodigoConviteInvalido = "Código de convite inválido.";
+        public const string JaParticipa = "Você já participa do Prumo.";
+
         public static string RN22_Transicao(object atual, string acao) =>
             $"Transição de '{atual}' para '{acao}' não permitida.";
 
