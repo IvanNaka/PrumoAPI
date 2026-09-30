@@ -9,7 +9,7 @@ namespace Prumo.Application.Interfaces
     /// </summary>
     public interface IOnboardingService
     {
-        /// <summary>Cria a equipe e torna o usuário Administrador e membro dela.</summary>
+        /// <summary>Cria a equipe e torna o usuário TechLead e membro dela.</summary>
         Task<LoginResponseDto> CreateTeamAsync(CriarEquipeOnboardingDto dto);
 
         /// <summary>Entra na equipe do código de convite como Desenvolvedor.</summary>

@@ -26,7 +26,7 @@ namespace Prumo.Tests.Api
         }
 
         [Fact]
-        public async Task CriarEquipe_UsuarioViraAdministradorEMembro()
+        public async Task CriarEquipe_UsuarioViraTechLeadEMembro()
         {
             var pendente = await UserAsync();
             var nome = NomeEquipe();
@@ -35,7 +35,7 @@ namespace Prumo.Tests.Api
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var session = await response.Content.ReadFromJsonAsync<JsonElement>();
-            Assert.Equal(new[] { "Administrador" }, Roles(session));
+            Assert.Equal(new[] { "TechLead" }, Roles(session));
 
             var client = ClientWithToken(session);
             var equipes = await client.GetFromJsonAsync<JsonElement>("/api/equipes");

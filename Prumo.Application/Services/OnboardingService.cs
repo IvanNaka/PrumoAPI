@@ -33,7 +33,7 @@ namespace Prumo.Application.Services
             var team = await _teamService.CreateAsync(new SalvarEquipeDto { Nome = dto.Nome });
 
             AddMembership(team.Id, user);
-            user.Roles.Add(new UserRole { UserId = user.Id, Role = RoleName.Administrador });
+            user.Roles.Add(new UserRole { UserId = user.Id, Role = RoleName.TechLead });
             await _db.SaveChangesAsync();
 
             return await _authService.RefreshSessionAsync(user.Id);

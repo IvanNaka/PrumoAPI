@@ -55,7 +55,7 @@ Autentica (ou cria) um usuário via ID Token do Google e retorna um JWT.
 Somente para usuários logados **sem perfil**; quem já tem perfil recebe `409` ("Você já participa do Prumo."). As duas rotas devolvem um novo login (`{ token, expiraEm, usuario }`) já com o perfil concedido.
 
 ### `POST /api/onboarding/equipes`
-Cria a equipe `{ "nome": "string" }`; o usuário vira membro e recebe o perfil `Administrador`. `409` se o nome já existir.
+Cria a equipe `{ "nome": "string" }`; o usuário vira membro e recebe o perfil `TechLead`. `409` se o nome já existir.
 
 ### `POST /api/onboarding/entrar`
 Entra na equipe do código de convite `{ "codigo": "string" }` (sem diferenciar maiúsculas); o usuário vira membro e recebe o perfil `Desenvolvedor`. `404` "Código de convite inválido.".

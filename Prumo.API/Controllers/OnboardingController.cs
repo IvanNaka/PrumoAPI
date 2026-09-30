@@ -20,7 +20,7 @@ namespace Prumo.API.Controllers
             _onboardingService = onboardingService;
         }
 
-        /// <summary>Cria uma equipe; o usuário vira Administrador. Devolve um novo JWT.</summary>
+        /// <summary>Cria uma equipe; o usuário vira TechLead. Devolve um novo JWT.</summary>
         [HttpPost("equipes")]
         public async Task<ActionResult<LoginResponseDto>> CreateTeam([FromBody] CriarEquipeOnboardingDto dto)
         {
