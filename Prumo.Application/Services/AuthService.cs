@@ -9,6 +9,7 @@ using Prumo.Application.Common;
 using Prumo.Application.DTOs.Auth;
 using Prumo.Application.Interfaces;
 using Prumo.Domain.Entities;
+using Prumo.Domain.Enums;
 
 namespace Prumo.Application.Services
 {
@@ -39,10 +40,10 @@ namespace Prumo.Application.Services
                 throw new BusinessRuleException(401, Messages.RN01_TokenInvalido);
             }
 
-            string googleEmail;
+            GoogleUserInfo google;
             try
             {
-                googleEmail = await _googleValidator.ValidateAndGetEmailAsync(idToken);
+                google = await _googleValidator.ValidateAsync(idToken);
             }
             catch (InvalidJwtException)
             {
@@ -53,13 +54,55 @@ namespace Prumo.Application.Services
                 throw new BusinessRuleException(503, Messages.RN02_FalhaGoogle);
             }
 
-            var email = googleEmail.Trim().ToLowerInvariant();
-            var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == email);
+            var email = google.Email.Trim().ToLowerInvariant();
+            var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == email)
+                ?? await RegisterAsync(email, google.Name);
+            if (!user.IsActive)
+            {
+                throw new BusinessRuleException(403, Messages.RN03_SemPermissao);
+            }
+
+            return IssueSession(user);
+        }
+
+        public async Task<LoginResponseDto> RefreshSessionAsync(Guid userId)
+        {
+            var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == userId);
             if (user is null || !user.IsActive)
             {
                 throw new BusinessRuleException(403, Messages.RN03_SemPermissao);
             }
 
+            return IssueSession(user);
+        }
+
+        /// <summary>
+        /// Primeiro acesso de um e-mail não cadastrado: cria o usuário. Se o e-mail já foi incluído como
+        /// membro de alguma equipe, ele entra como Desenvolvedor; senão fica sem perfil e só acessa a
+        /// tela de entrar/criar equipe.
+        /// </summary>
+        private async Task<User> RegisterAsync(string email, string? name)
+        {
+            var memberships = await _db.TeamUsers.Where(m => m.Email == email && m.UserId == null).ToListAsync();
+            var nome = string.IsNullOrWhiteSpace(name) ? email.Split('@')[0] : name.Trim();
+            var user = new User { Name = nome.Length > 150 ? nome[..150] : nome, Email = email };
+            if (memberships.Count > 0)
+            {
+                user.Roles.Add(new UserRole { UserId = user.Id, Role = RoleName.Desenvolvedor });
+            }
+
+            foreach (var membership in memberships)
+            {
+                membership.UserId = user.Id;
+            }
+
+            _db.Users.Add(user);
+            await _db.SaveChangesAsync();
+            return user;
+        }
+
+        private LoginResponseDto IssueSession(User user)
+        {
             var expiraEm = DateTime.UtcNow.AddHours(GetExpirationHours());
             return new LoginResponseDto
             {

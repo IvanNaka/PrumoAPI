@@ -7,6 +7,9 @@ namespace Prumo.Application.DTOs.Team
         public Guid? PortfolioId { get; set; }
         public string? PortfolioNome { get; set; }
         public int CapacidadeMensalTotal { get; set; }
+
+        /// <summary>Código de convite; só é devolvido para quem pode editar equipes.</summary>
+        public string? CodigoConvite { get; set; }
         public List<MembroEquipeDto> Membros { get; set; } = new();
     }
 

@@ -12,6 +12,9 @@ namespace Prumo.Application.Interfaces
         Task<EquipeDto> UpdateAsync(Guid id, SalvarEquipeDto dto);
         Task DeleteAsync(Guid id);
 
+        /// <summary>POST /equipes/{id}/codigo-convite — gera um novo código (o anterior deixa de valer).</summary>
+        Task<EquipeDto> RegenerateInviteCodeAsync(Guid id);
+
         Task<IEnumerable<MembroEquipeDto>> GetMembersAsync(Guid teamId);
         Task<MembroEquipeDto> AddMemberAsync(Guid teamId, SalvarMembroDto dto);
         Task<MembroEquipeDto> UpdateMemberAsync(Guid teamId, Guid memberId, SalvarMembroDto dto);

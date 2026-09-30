@@ -54,6 +54,7 @@ namespace Prumo.API.Extensions
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IProjectDependencyService, ProjectDependencyService>();
             services.AddScoped<ITeamService, TeamService>();
+            services.AddScoped<IOnboardingService, OnboardingService>();
             services.AddScoped<IRoadmapService, RoadmapService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IRoleService, RoleService>();

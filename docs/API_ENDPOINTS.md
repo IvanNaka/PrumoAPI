@@ -13,6 +13,7 @@ Respostas de erro seguem os códigos HTTP padrão: `400 BadRequest`, `401 Unauth
 ## Sumário
 
 - [Auth](#auth)
+- [Onboarding](#onboarding-primeiro-acesso)
 - [Roles](#roles)
 - [Teams (Times)](#teams-times)
 - [Users (Usuários)](#users-usuários)
@@ -45,7 +46,22 @@ Autentica (ou cria) um usuário via ID Token do Google e retorna um JWT.
 
 **400 BadRequest:** `idToken` ausente/vazio.
 
-> O JWT retornado inclui o claim de role (`ClaimTypes.Role`) com o nome da role do usuário (ex.: `Admin`, `PO`, `DEV`...). Usuários novos criados via login Google recebem a role padrão `DEV`.
+> O JWT retornado inclui um claim de role por perfil do usuário. Um e-mail ainda não cadastrado é criado no primeiro login **sem perfil** (ou como `Desenvolvedor`, se o e-mail já for membro de alguma equipe). Usuário sem perfil só acessa `GET /api/auth/me` e as rotas de `/api/onboarding`; as demais respondem `403` com "Entre em uma equipe ou crie uma para acessar o Prumo.".
+
+---
+
+## Onboarding (primeiro acesso)
+
+Somente para usuários logados **sem perfil**; quem já tem perfil recebe `409` ("Você já participa do Prumo."). As duas rotas devolvem um novo login (`{ token, expiraEm, usuario }`) já com o perfil concedido.
+
+### `POST /api/onboarding/equipes`
+Cria a equipe `{ "nome": "string" }`; o usuário vira membro e recebe o perfil `Administrador`. `409` se o nome já existir.
+
+### `POST /api/onboarding/entrar`
+Entra na equipe do código de convite `{ "codigo": "string" }` (sem diferenciar maiúsculas); o usuário vira membro e recebe o perfil `Desenvolvedor`. `404` "Código de convite inválido.".
+
+### `POST /api/equipes/{id}/codigo-convite`
+(Policy `EditarEquipes`.) Gera um novo código de convite; o anterior deixa de valer. O campo `codigoConvite` das equipes só é preenchido para `Administrador` e `TechLead`.
 
 ---
 

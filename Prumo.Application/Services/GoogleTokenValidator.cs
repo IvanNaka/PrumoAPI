@@ -13,7 +13,7 @@ namespace Prumo.Application.Services
             _configuration = configuration;
         }
 
-        public async Task<string> ValidateAndGetEmailAsync(string idToken)
+        public async Task<GoogleUserInfo> ValidateAsync(string idToken)
         {
             var clientId = _configuration["Google:ClientId"] ?? _configuration["Authentication:Google:ClientId"];
             var payload = await GoogleJsonWebSignature.ValidateAsync(idToken,
@@ -24,7 +24,7 @@ namespace Prumo.Application.Services
                 throw new InvalidJwtException("Token sem e-mail.");
             }
 
-            return payload.Email;
+            return new GoogleUserInfo(payload.Email, payload.Name);
         }
     }
 }

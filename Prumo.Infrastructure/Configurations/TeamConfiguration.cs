@@ -18,6 +18,9 @@ namespace Prumo.Infrastructure.Configurations
             builder.Property(t => t.Name).HasMaxLength(100).IsRequired();
             builder.HasIndex(t => t.Name).IsUnique();
 
+            builder.Property(t => t.InviteCode).HasMaxLength(Team.InviteCodeLength).IsRequired();
+            builder.HasIndex(t => t.InviteCode).IsUnique();
+
             builder.Property(t => t.PortfolioId).HasColumnType("uuid").IsRequired(false);
             builder.HasOne(t => t.Portfolio)
                 .WithMany(p => p.Teams)
