@@ -191,9 +191,9 @@ namespace Prumo.Application.Services
                 throw new BusinessRuleException(400, "Informe um e-mail válido.");
             }
 
-            if (dto.CustoHora < 0)
+            if (dto.CustoHora is < 0 or > Limites.CustoHoraMaximo)
             {
-                throw new BusinessRuleException(400, "O custo por hora deve ser maior ou igual a 0.");
+                throw new BusinessRuleException(400, "O custo por hora deve ficar entre 0 e R$ 100.000,00.");
             }
 
             if (dto.CapacidadeMensalHoras is < 1 or > 300)

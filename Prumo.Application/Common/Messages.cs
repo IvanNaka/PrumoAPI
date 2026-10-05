@@ -32,6 +32,7 @@ namespace Prumo.Application.Common
         public const string RN26_TokenJiraExpirado = "Token do Jira expirado. Refaça a autenticação.";
         public const string RN27_PerfilSemPermissao = "Seu perfil não tem permissão para esta ação.";
         public const string RN28_LancamentoInvalido = "Lançamento inválido: valor deve ser positivo e data não pode ser futura.";
+        public const string RetornoInvalido = "Retorno inválido: valor deve ser positivo e data não pode ser futura.";
         public const string RN29_SomentePriorizados = "Apenas projetos priorizados podem ser aprovados ou rejeitados.";
 
         // Acesso inicial: usuário sem perfil só pode entrar em uma equipe (código de convite) ou criar uma.
