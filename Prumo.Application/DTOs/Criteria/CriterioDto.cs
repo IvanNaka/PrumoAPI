@@ -20,4 +20,11 @@ namespace Prumo.Application.DTOs.Criteria
         public decimal? Peso { get; set; }
         public string? Tipo { get; set; }
     }
+
+    // PUT /portfolios/{id}/criterios/pesos — redistribui os pesos de todos os critérios de uma vez (soma = 10).
+    public class PesoCriterioDto
+    {
+        public Guid CriterioId { get; set; }
+        public decimal? Peso { get; set; }
+    }
 }

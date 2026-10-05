@@ -124,7 +124,7 @@ namespace Prumo.API.Extensions
                     new() { Name = "Valor de negócio", Description = "Retorno esperado para o negócio.", Type = CriteriaType.Beneficio, ValueWeight = 4, PortfolioId = portfolio.Id, UserId = portfolio.OwnerId },
                     new() { Name = "Esforço", Description = "Tamanho do trabalho (quanto menor, melhor).", Type = CriteriaType.Custo, ValueWeight = 2, PortfolioId = portfolio.Id, UserId = portfolio.OwnerId },
                     new() { Name = "Risco", Description = "Incerteza técnica e de negócio (quanto menor, melhor).", Type = CriteriaType.Custo, ValueWeight = 2, PortfolioId = portfolio.Id, UserId = portfolio.OwnerId },
-                    new() { Name = "Alinhamento estratégico", Description = "Aderência aos OKRs da empresa.", Type = CriteriaType.Beneficio, ValueWeight = 3, PortfolioId = portfolio.Id, UserId = portfolio.OwnerId },
+                    new() { Name = "Alinhamento estratégico", Description = "Aderência aos OKRs da empresa.", Type = CriteriaType.Beneficio, ValueWeight = 2, PortfolioId = portfolio.Id, UserId = portfolio.OwnerId },
                 };
                 db.PriorityCriterias.AddRange(criterios[portfolio.Id]);
             }
