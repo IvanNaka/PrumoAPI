@@ -255,6 +255,11 @@ namespace Prumo.Application.Services
                 throw new BusinessRuleException(400, "O orçamento aprovado deve ser maior ou igual a 0.");
             }
 
+            if (dto.OrcamentoAprovado > Limites.ValorMonetarioMaximo)
+            {
+                throw new BusinessRuleException(400, Limites.ValorMonetarioAcimaDoLimite);
+            }
+
             if (!Enum.TryParse<StrategicCategory>(dto.CategoriaEstrategica, true, out var category) || !Enum.IsDefined(category))
             {
                 throw new BusinessRuleException(400, "Categoria estratégica inválida. Use Run, Grow ou Transform.");

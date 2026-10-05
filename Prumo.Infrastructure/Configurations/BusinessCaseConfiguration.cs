@@ -12,7 +12,7 @@ namespace Prumo.Infrastructure.Configurations
             builder.ToTable("BusinessCases");
             builder.HasKey(b => b.Id);
             builder.Property(b => b.InitialInvestment).HasColumnType("decimal(18,2)").IsRequired();
-            builder.Property(b => b.AnnualDiscountRate).HasColumnType("decimal(5,2)").IsRequired();
+            builder.Property(b => b.AnnualDiscountRate).HasColumnType("decimal(7,4)").IsRequired();
 
             // 1 business case por projeto.
             builder.HasIndex(b => b.ProjectId).IsUnique();

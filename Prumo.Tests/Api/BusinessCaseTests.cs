@@ -63,5 +63,83 @@ namespace Prumo.Tests.Api
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
+
+        [Fact]
+        public async Task FluxoPrevistoNegativoOuAcimaDoLimite_Recebe400()
+        {
+            var (client, project) = await ProjetoAsync();
+
+            var negativo = await client.PutAsJsonAsync($"/api/projetos/{project.Id}/business-case", new
+            {
+                investimentoInicial = 1000, taxaDescontoAnual = 10,
+                fluxosPrevistos = new[] { new { mes = 1, valor = -100 } },
+            });
+            var gigante = await client.PutAsJsonAsync($"/api/projetos/{project.Id}/business-case", new
+            {
+                investimentoInicial = 1000, taxaDescontoAnual = 10,
+                fluxosPrevistos = new[] { new { mes = 1, valor = 1_000_000_000_001m } },
+            });
+            var investimentoGigante = await client.PutAsJsonAsync($"/api/projetos/{project.Id}/business-case", new
+            {
+                investimentoInicial = 1_000_000_000_001m, taxaDescontoAnual = 10,
+            });
+
+            Assert.Equal(HttpStatusCode.BadRequest, negativo.StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, gigante.StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, investimentoGigante.StatusCode);
+        }
+
+        [Fact]
+        public async Task FluxoPrevistoZero_EhAceito()
+        {
+            var (client, project) = await ProjetoAsync();
+
+            var response = await client.PutAsJsonAsync($"/api/projetos/{project.Id}/business-case", new
+            {
+                investimentoInicial = 0, taxaDescontoAnual = 0,
+                fluxosPrevistos = new[] { new { mes = 1, valor = 0 } },
+            });
+
+            Assert.True(response.IsSuccessStatusCode, await response.Content.ReadAsStringAsync());
+        }
+
+        [Theory]
+        [InlineData(0)]
+        [InlineData(-50)]
+        [InlineData(1_000_000_000_001)]
+        public async Task RetornoComValorInvalido_Recebe400(double valor)
+        {
+            var (client, project) = await ProjetoAsync();
+
+            var response = await client.PostAsJsonAsync($"/api/projetos/{project.Id}/retornos",
+                new { data = DateOnly.FromDateTime(DateTime.UtcNow).ToString("yyyy-MM-dd"), valor = (decimal)valor });
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task RetornoComDataFutura_Recebe400()
+        {
+            var (client, project) = await ProjetoAsync();
+
+            var amanha = DateOnly.FromDateTime(DateTime.UtcNow).AddDays(1);
+            var response = await client.PostAsJsonAsync($"/api/projetos/{project.Id}/retornos",
+                new { data = amanha.ToString("yyyy-MM-dd"), valor = 100 });
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        private async Task<(HttpClient Client, Project Project)> ProjetoAsync()
+        {
+            var gerente = await UserAsync(RoleName.GerenteProjeto);
+            var portfolio = await PortfolioAsync(gerente);
+            var project = new Project
+            {
+                Name = "P", PortfolioId = portfolio.Id, OwnerId = gerente.Id, Status = ProjectStatus.EmAndamento,
+                StartDate = new DateOnly(2026, 1, 1), EndDate = new DateOnly(2026, 12, 31), ApprovedBudget = 10000,
+            };
+            await Factory.WithDbAsync(async db => { db.Projects.Add(project); await db.SaveChangesAsync(); });
+            return (Factory.ClientFor(gerente), project);
+        }
     }
 }
