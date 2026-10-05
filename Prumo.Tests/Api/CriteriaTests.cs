@@ -144,6 +144,48 @@ namespace Prumo.Tests.Api
         }
 
         [Fact]
+        public async Task SomaDosPesosNaoPodeUltrapassar10()
+        {
+            var (_, portfolio, client) = await SetupAsync();
+            await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios", new { nome = "Valor", peso = 7 });
+            var risco = await (await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios", new { nome = "Risco", peso = 3, tipo = "Custo" }))
+                .Content.ReadFromJsonAsync<JsonElement>();
+
+            var criar = await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios", new { nome = "Extra", peso = 0.5 });
+            Assert.Equal(HttpStatusCode.BadRequest, criar.StatusCode);
+            Assert.Equal("A soma dos pesos dos critérios não pode ultrapassar 10.", await DetailAsync(criar));
+
+            var editar = await client.PutAsJsonAsync($"/api/criterios/{risco.GetProperty("id").GetGuid()}", new { nome = "Risco", peso = 4, tipo = "Custo" });
+            Assert.Equal(HttpStatusCode.BadRequest, editar.StatusCode);
+            Assert.Equal("A soma dos pesos dos critérios não pode ultrapassar 10.", await DetailAsync(editar));
+        }
+
+        [Fact]
+        public async Task RedistribuirPesos_ExigeTodosOsCriteriosESoma10()
+        {
+            var (_, portfolio, client) = await SetupAsync();
+            var valor = (await (await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios", new { nome = "Valor", peso = 7 }))
+                .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+            var risco = (await (await client.PostAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios", new { nome = "Risco", peso = 3, tipo = "Custo" }))
+                .Content.ReadFromJsonAsync<JsonElement>()).GetProperty("id").GetGuid();
+            var url = $"/api/portfolios/{portfolio.Id}/criterios/pesos";
+
+            var somaErrada = await client.PutAsJsonAsync(url, new[] { new { criterioId = valor, peso = 5m }, new { criterioId = risco, peso = 4m } });
+            Assert.Equal(HttpStatusCode.BadRequest, somaErrada.StatusCode);
+            Assert.Equal("A soma dos pesos dos critérios deve ser exatamente 10.", await DetailAsync(somaErrada));
+
+            var incompleto = await client.PutAsJsonAsync(url, new[] { new { criterioId = valor, peso = 10m } });
+            Assert.Equal(HttpStatusCode.BadRequest, incompleto.StatusCode);
+
+            var ok = await client.PutAsJsonAsync(url, new[] { new { criterioId = valor, peso = 4.5m }, new { criterioId = risco, peso = 5.5m } });
+            Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+            var pesos = await Factory.WithDbAsync(db => db.PriorityCriterias.AsNoTracking()
+                .Where(c => c.PortfolioId == portfolio.Id).ToDictionaryAsync(c => c.Id, c => c.ValueWeight));
+            Assert.Equal(4.5m, pesos[valor]);
+            Assert.Equal(5.5m, pesos[risco]);
+        }
+
+        [Fact]
         public async Task GerenteNaoEditaCriterios_RN27()
         {
             var gerente = await UserAsync(RoleName.GerenteProjeto);

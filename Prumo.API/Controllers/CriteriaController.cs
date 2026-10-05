@@ -33,6 +33,13 @@ namespace Prumo.API.Controllers
             return Created($"/api/criterios/{created.Id}", created);
         }
 
+        [HttpPut("portfolios/{portfolioId:guid}/criterios/pesos")]
+        [Authorize(Policy = Policies.EditarCriterios)]
+        public async Task<ActionResult<IEnumerable<CriterioDto>>> UpdateWeights(Guid portfolioId, [FromBody] List<PesoCriterioDto> pesos)
+        {
+            return Ok(await _service.UpdateWeightsAsync(portfolioId, pesos ?? new List<PesoCriterioDto>()));
+        }
+
         [HttpPut("criterios/{id:guid}")]
         [Authorize(Policy = Policies.EditarCriterios)]
         public async Task<ActionResult<CriterioDto>> Update(Guid id, [FromBody] SalvarCriterioDto dto)

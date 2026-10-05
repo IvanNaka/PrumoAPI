@@ -12,6 +12,8 @@ namespace Prumo.Application.Common
         public const string RN05_NenhumPortfolio = "Nenhum portfólio encontrado.";
         public const string RN06_NaoMembro = "Você não tem permissão para acessar este portfólio.";
         public const string RN07_PesoInvalido = "Peso inválido. Informe um valor maior que 0 e até 10.";
+        public const string SomaPesosExcedida = "A soma dos pesos dos critérios não pode ultrapassar 10.";
+        public const string SomaPesosDiferenteDeDez = "A soma dos pesos dos critérios deve ser exatamente 10.";
         public const string RN08_NomeCriterio = "O nome do critério é obrigatório.";
         public const string RN09_CriterioRepetido = "Já existe um critério com este nome neste portfólio.";
         public const string RN10_CriterioNaoEncontrado = "Critério não encontrado.";
