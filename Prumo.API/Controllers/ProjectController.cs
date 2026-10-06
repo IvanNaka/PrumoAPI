@@ -53,5 +53,27 @@ namespace Prumo.API.Controllers
         {
             return Ok(await _projectService.ChangeStatusAsync(id, dto?.Acao ?? string.Empty));
         }
+
+        [HttpGet("projetos/{id:guid}/equipes")]
+        public async Task<ActionResult<IEnumerable<EquipeAlocadaDto>>> GetTeams(Guid id)
+        {
+            return Ok(await _projectService.GetTeamsAsync(id));
+        }
+
+        [HttpPost("projetos/{id:guid}/equipes/{equipeId:guid}")]
+        [Authorize(Policy = Policies.EditarProjetos)]
+        public async Task<IActionResult> AllocateTeam(Guid id, Guid equipeId)
+        {
+            await _projectService.AllocateTeamAsync(id, equipeId);
+            return NoContent();
+        }
+
+        [HttpDelete("projetos/{id:guid}/equipes/{equipeId:guid}")]
+        [Authorize(Policy = Policies.EditarProjetos)]
+        public async Task<IActionResult> DeallocateTeam(Guid id, Guid equipeId)
+        {
+            await _projectService.DeallocateTeamAsync(id, equipeId);
+            return NoContent();
+        }
     }
 }

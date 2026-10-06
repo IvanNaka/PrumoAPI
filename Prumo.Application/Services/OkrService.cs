@@ -10,6 +10,8 @@ namespace Prumo.Application.Services
     // OKRs e Key Results (RF14, RF15, RF17, UC8, F4).
     public class OkrService : IOkrService
     {
+        private const string ValorKrAcimaDoLimite = "A meta e o valor atual do Key Result devem ser no máximo 1.000.000.000.000.";
+
         private readonly IAppDbContext _db;
         private readonly IPortfolioAccessService _access;
 
@@ -99,6 +101,11 @@ namespace Prumo.Application.Services
             if (valorAtual is null or < 0)
             {
                 throw new BusinessRuleException(400, "O valor atual deve ser maior ou igual a 0.");
+            }
+
+            if (valorAtual > Limites.ValorKeyResultMaximo)
+            {
+                throw new BusinessRuleException(400, ValorKrAcimaDoLimite);
             }
 
             kr.CurrentValue = valorAtual.Value;
@@ -209,6 +216,11 @@ namespace Prumo.Application.Services
             if (dto.KeyResults.Any(k => k.ValorAtual < 0))
             {
                 throw new BusinessRuleException(400, "O valor atual deve ser maior ou igual a 0.");
+            }
+
+            if (dto.KeyResults.Any(k => k.Meta > Limites.ValorKeyResultMaximo || k.ValorAtual > Limites.ValorKeyResultMaximo))
+            {
+                throw new BusinessRuleException(400, ValorKrAcimaDoLimite);
             }
 
             if (dto.DataInicio.HasValue && dto.DataFim.HasValue && dto.DataFim < dto.DataInicio)

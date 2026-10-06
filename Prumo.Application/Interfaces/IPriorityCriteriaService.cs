@@ -9,5 +9,6 @@ namespace Prumo.Application.Interfaces
         Task<CriterioDto> CreateAsync(Guid portfolioId, SalvarCriterioDto dto);
         Task<CriterioDto> UpdateAsync(Guid id, SalvarCriterioDto dto);
         Task DeleteAsync(Guid id);
+        Task<IEnumerable<CriterioDto>> UpdateWeightsAsync(Guid portfolioId, IReadOnlyCollection<PesoCriterioDto> pesos);
     }
 }

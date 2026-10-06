@@ -6,6 +6,7 @@ using Prumo.Application.DTOs.Team;
 using Prumo.Application.Indicators;
 using Prumo.Application.Interfaces;
 using Prumo.Domain.Entities;
+using Prumo.Domain.Enums;
 
 namespace Prumo.Application.Services
 {
@@ -30,7 +31,7 @@ namespace Prumo.Application.Services
                 .Include(t => t.Portfolio)
                 .OrderBy(t => t.Name)
                 .ToListAsync();
-            return teams.Select(Map);
+            return teams.Select(t => Map(t, CanSeeInviteCode()));
         }
 
         public async Task<EquipeDto> GetAsync(Guid id)
@@ -40,7 +41,7 @@ namespace Prumo.Application.Services
                 .Include(t => t.Portfolio)
                 .SingleOrDefaultAsync(t => t.Id == id)
                 ?? throw Messages.NotFound("Equipe não encontrada.");
-            return Map(team);
+            return Map(team, CanSeeInviteCode());
         }
 
         public async Task<EquipeDto> CreateAsync(SalvarEquipeDto dto)
@@ -67,6 +68,15 @@ namespace Prumo.Application.Services
             var team = await _db.Teams.SingleOrDefaultAsync(t => t.Id == id) ?? throw Messages.NotFound("Equipe não encontrada.");
             _db.Teams.Remove(team);
             await _db.SaveChangesAsync();
+        }
+
+        public async Task<EquipeDto> RegenerateInviteCodeAsync(Guid id)
+        {
+            var team = await _db.Teams.SingleOrDefaultAsync(t => t.Id == id) ?? throw Messages.NotFound("Equipe não encontrada.");
+            team.InviteCode = Team.NewInviteCode();
+            team.UpdatedDate = DateTime.UtcNow;
+            await _db.SaveChangesAsync();
+            return await GetAsync(id);
         }
 
         public async Task<IEnumerable<MembroEquipeDto>> GetMembersAsync(Guid teamId)
@@ -181,9 +191,9 @@ namespace Prumo.Application.Services
                 throw new BusinessRuleException(400, "Informe um e-mail válido.");
             }
 
-            if (dto.CustoHora < 0)
+            if (dto.CustoHora is < 0 or > Limites.CustoHoraMaximo)
             {
-                throw new BusinessRuleException(400, "O custo por hora deve ser maior ou igual a 0.");
+                throw new BusinessRuleException(400, "O custo por hora deve ficar entre 0 e R$ 100.000,00.");
             }
 
             if (dto.CapacidadeMensalHoras is < 1 or > 300)
@@ -208,13 +218,18 @@ namespace Prumo.Application.Services
             member.MonthlyCapacityHours = dto.CapacidadeMensalHoras!.Value;
         }
 
-        private static EquipeDto Map(Team team) => new()
+        // Mesmos perfis da policy EditarEquipes.
+        private bool CanSeeInviteCode() =>
+            _currentUser.IsInRole(RoleName.Administrador) || _currentUser.IsInRole(RoleName.TechLead);
+
+        private static EquipeDto Map(Team team, bool showInviteCode) => new()
         {
             Id = team.Id,
             Nome = team.Name,
             PortfolioId = team.PortfolioId,
             PortfolioNome = team.Portfolio?.Name,
             CapacidadeMensalTotal = team.Members.Sum(m => m.MonthlyCapacityHours),
+            CodigoConvite = showInviteCode ? team.InviteCode : null,
             Membros = team.Members.OrderBy(m => m.Name).Select(MapMember).ToList(),
         };
 

@@ -12,6 +12,8 @@ namespace Prumo.Application.Common
         public const string RN05_NenhumPortfolio = "Nenhum portfólio encontrado.";
         public const string RN06_NaoMembro = "Você não tem permissão para acessar este portfólio.";
         public const string RN07_PesoInvalido = "Peso inválido. Informe um valor maior que 0 e até 10.";
+        public const string SomaPesosExcedida = "A soma dos pesos dos critérios não pode ultrapassar 10.";
+        public const string SomaPesosDiferenteDeDez = "A soma dos pesos dos critérios deve ser exatamente 10.";
         public const string RN08_NomeCriterio = "O nome do critério é obrigatório.";
         public const string RN09_CriterioRepetido = "Já existe um critério com este nome neste portfólio.";
         public const string RN10_CriterioNaoEncontrado = "Critério não encontrado.";
@@ -32,7 +34,13 @@ namespace Prumo.Application.Common
         public const string RN26_TokenJiraExpirado = "Token do Jira expirado. Refaça a autenticação.";
         public const string RN27_PerfilSemPermissao = "Seu perfil não tem permissão para esta ação.";
         public const string RN28_LancamentoInvalido = "Lançamento inválido: valor deve ser positivo e data não pode ser futura.";
+        public const string RetornoInvalido = "Retorno inválido: valor deve ser positivo e data não pode ser futura.";
         public const string RN29_SomentePriorizados = "Apenas projetos priorizados podem ser aprovados ou rejeitados.";
+
+        // Acesso inicial: usuário sem perfil só pode entrar em uma equipe (código de convite) ou criar uma.
+        public const string SemEquipe = "Entre em uma equipe ou crie uma para acessar o Prumo.";
+        public const string CodigoConviteInvalido = "Código de convite inválido.";
+        public const string JaParticipa = "Você já participa do Prumo.";
 
         public static string RN22_Transicao(object atual, string acao) =>
             $"Transição de '{atual}' para '{acao}' não permitida.";

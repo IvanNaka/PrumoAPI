@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Prumo.API.Authorization;
 using Prumo.Application.DTOs.Auth;
 using Prumo.Application.Interfaces;
 
@@ -24,7 +25,7 @@ namespace Prumo.API.Controllers
             return Ok(await _authService.LoginGoogleAsync(dto?.IdToken ?? string.Empty));
         }
 
-        [Authorize]
+        [Authorize(Policy = Policies.Autenticado)]
         [HttpGet("me")]
         public async Task<ActionResult<AuthUserDto>> Me()
         {

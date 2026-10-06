@@ -45,6 +45,7 @@ namespace Prumo.Application.Services
             await _access.EnsureWriteAccessAsync(portfolioId);
             var (nome, peso, tipo) = Validate(dto);
             await EnsureUniqueNameAsync(portfolioId, nome, null);
+            await EnsureTotalWeightAsync(portfolioId, peso, null);
 
             var criteria = new PriorityCriteria
             {
@@ -83,6 +84,7 @@ namespace Prumo.Application.Services
             await _access.EnsureWriteAccessAsync(criteria.PortfolioId);
             var (nome, peso, tipo) = Validate(dto);
             await EnsureUniqueNameAsync(criteria.PortfolioId, nome, id);
+            await EnsureTotalWeightAsync(criteria.PortfolioId, peso, id);
 
             var pesoOuTipoMudou = criteria.ValueWeight != peso || criteria.Type != tipo;
             criteria.Name = nome;
@@ -117,6 +119,59 @@ namespace Prumo.Application.Services
 
             await _portfolioService.ApplyAutomaticEventAsync(criteria.PortfolioId, PortfolioStateMachine.AlterarCriterio);
             await _prioritization.RecalculateIfNeededAsync(criteria.PortfolioId);
+        }
+
+        /// <summary>
+        /// PUT /portfolios/{id}/criterios/pesos — atualiza os pesos de todos os critérios de uma vez.
+        /// Todos os critérios do portfólio devem ser informados e a soma deve ser exatamente 10.
+        /// </summary>
+        public async Task<IEnumerable<CriterioDto>> UpdateWeightsAsync(Guid portfolioId, IReadOnlyCollection<PesoCriterioDto> pesos)
+        {
+            await _access.EnsureWriteAccessAsync(portfolioId);
+            var criterias = await _db.PriorityCriterias.Where(c => c.PortfolioId == portfolioId).ToListAsync();
+            if (criterias.Count == 0)
+            {
+                throw new BusinessRuleException(409, Messages.RN15_SemCriterios);
+            }
+
+            var porId = new Dictionary<Guid, decimal>();
+            foreach (var item in pesos)
+            {
+                if (item.Peso is null || item.Peso <= 0 || item.Peso > 10)
+                {
+                    throw new BusinessRuleException(400, Messages.RN07_PesoInvalido);
+                }
+                porId[item.CriterioId] = Math.Round(item.Peso.Value, 2);
+            }
+
+            if (porId.Count != criterias.Count || criterias.Any(c => !porId.ContainsKey(c.Id)))
+            {
+                throw new BusinessRuleException(400, "Informe o peso de todos os critérios do portfólio.");
+            }
+
+            if (porId.Values.Sum() != PrioritizationService.SomaPesos)
+            {
+                throw new BusinessRuleException(400, Messages.SomaPesosDiferenteDeDez);
+            }
+
+            var mudou = false;
+            var agora = DateTime.UtcNow;
+            foreach (var criteria in criterias.Where(c => c.ValueWeight != porId[c.Id]))
+            {
+                criteria.ValueWeight = porId[criteria.Id];
+                criteria.UpdatedDate = agora;
+                mudou = true;
+            }
+
+            if (mudou)
+            {
+                await _db.SaveChangesAsync();
+                await _portfolioService.ApplyAutomaticEventAsync(portfolioId, PortfolioStateMachine.AlterarCriterio);
+                // RF21 / F3: alterar peso recalcula o ranking automaticamente.
+                await _prioritization.RecalculateIfNeededAsync(portfolioId);
+            }
+
+            return await ListByPortfolioAsync(portfolioId);
         }
 
         private async Task<PriorityCriteria> FindAsync(Guid id) =>
@@ -163,6 +218,18 @@ namespace Prumo.Application.Services
             if (exists)
             {
                 throw new BusinessRuleException(409, Messages.RN09_CriterioRepetido);
+            }
+        }
+
+        // A soma dos pesos do portfólio nunca pode passar de 10 (e deve ser 10 para priorizar).
+        private async Task EnsureTotalWeightAsync(Guid portfolioId, decimal peso, Guid? currentId)
+        {
+            var outros = await _db.PriorityCriterias
+                .Where(c => c.PortfolioId == portfolioId && c.Id != currentId)
+                .SumAsync(c => (decimal?)c.ValueWeight) ?? 0m;
+            if (outros + peso > PrioritizationService.SomaPesos)
+            {
+                throw new BusinessRuleException(400, Messages.SomaPesosExcedida);
             }
         }
 

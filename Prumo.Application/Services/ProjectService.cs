@@ -92,9 +92,12 @@ namespace Prumo.Application.Services
             var dependencias = await ProjectDependencyService.LoadAsync(
                 _db.ProjectDependencies.Where(d => d.ProjectId == id || d.DependsOnProjectId == id));
 
+            var equipes = await LoadTeamsAsync(id);
+
             return new ProjetoDetalheDto
             {
                 Dependencias = dependencias,
+                Equipes = equipes,
                 Id = project.Id,
                 PortfolioId = project.PortfolioId,
                 PortfolioNome = project.Portfolio.Name,
@@ -219,6 +222,53 @@ namespace Prumo.Application.Services
             return await GetDetailAsync(id);
         }
 
+        public async Task<IEnumerable<EquipeAlocadaDto>> GetTeamsAsync(Guid projectId)
+        {
+            await _access.EnsureProjectAccessAsync(projectId);
+            return await LoadTeamsAsync(projectId);
+        }
+
+        public async Task AllocateTeamAsync(Guid projectId, Guid teamId)
+        {
+            await _access.EnsureProjectAccessAsync(projectId, write: true);
+            if (!await _db.Teams.AnyAsync(t => t.Id == teamId))
+            {
+                throw Messages.NotFound("Equipe não encontrada.");
+            }
+
+            if (!await _db.ProjectTeams.AnyAsync(pt => pt.ProjectId == projectId && pt.TeamId == teamId))
+            {
+                _db.ProjectTeams.Add(new ProjectTeam { ProjectId = projectId, TeamId = teamId });
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        public async Task DeallocateTeamAsync(Guid projectId, Guid teamId)
+        {
+            await _access.EnsureProjectAccessAsync(projectId, write: true);
+            var link = await _db.ProjectTeams.SingleOrDefaultAsync(pt => pt.ProjectId == projectId && pt.TeamId == teamId);
+            if (link != null)
+            {
+                _db.ProjectTeams.Remove(link);
+                await _db.SaveChangesAsync();
+            }
+        }
+
+        private async Task<List<EquipeAlocadaDto>> LoadTeamsAsync(Guid projectId)
+        {
+            return await _db.ProjectTeams.AsNoTracking()
+                .Where(pt => pt.ProjectId == projectId)
+                .OrderBy(pt => pt.Team.Name)
+                .Select(pt => new EquipeAlocadaDto
+                {
+                    Id = pt.TeamId,
+                    Nome = pt.Team.Name,
+                    QuantidadeMembros = pt.Team.Members.Count,
+                    CapacidadeMensalTotal = pt.Team.Members.Sum(m => m.MonthlyCapacityHours),
+                })
+                .ToListAsync();
+        }
+
         private static string NormalizeAction(string? acao)
         {
             var value = acao?.Trim() ?? string.Empty;
@@ -253,6 +303,11 @@ namespace Prumo.Application.Services
             if (dto.OrcamentoAprovado < 0)
             {
                 throw new BusinessRuleException(400, "O orçamento aprovado deve ser maior ou igual a 0.");
+            }
+
+            if (dto.OrcamentoAprovado > Limites.ValorMonetarioMaximo)
+            {
+                throw new BusinessRuleException(400, Limites.ValorMonetarioAcimaDoLimite);
             }
 
             if (!Enum.TryParse<StrategicCategory>(dto.CategoriaEstrategica, true, out var category) || !Enum.IsDefined(category))

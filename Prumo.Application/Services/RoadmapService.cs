@@ -152,9 +152,10 @@ namespace Prumo.Application.Services
 
         private static void ValidateDates(DateTime startDate, DateTime endDate)
         {
-            if (endDate <= startDate)
+            // RN12: término igual ou posterior ao início (o front já aceita o mesmo dia).
+            if (endDate < startDate)
             {
-                throw new ArgumentException("endDate deve ser posterior a startDate.");
+                throw new ArgumentException("endDate deve ser igual ou posterior a startDate.");
             }
         }
 

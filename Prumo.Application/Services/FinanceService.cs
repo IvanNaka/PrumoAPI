@@ -44,6 +44,11 @@ namespace Prumo.Application.Services
                 throw new BusinessRuleException(400, Messages.RN28_LancamentoInvalido);
             }
 
+            if (dto.Valor > Limites.ValorMonetarioMaximo)
+            {
+                throw new BusinessRuleException(400, Limites.ValorMonetarioAcimaDoLimite);
+            }
+
             if (!Enum.TryParse<BudgetExpenseCategory>(dto.Tipo, true, out var tipo) || !Enum.IsDefined(tipo))
             {
                 throw new BusinessRuleException(400, "Tipo de lançamento inválido. Use Custo ou Despesa.");
@@ -93,15 +98,31 @@ namespace Prumo.Application.Services
                 throw new BusinessRuleException(400, "O investimento inicial deve ser maior ou igual a 0.");
             }
 
+            if (dto.InvestimentoInicial > Limites.ValorMonetarioMaximo)
+            {
+                throw new BusinessRuleException(400, Limites.ValorMonetarioAcimaDoLimite);
+            }
+
             if (dto.TaxaDescontoAnual is < 0 or > 100)
             {
                 throw new BusinessRuleException(400, "A taxa de desconto anual deve estar entre 0 e 100%.");
             }
 
             var fluxos = dto.FluxosPrevistos ?? new List<FluxoCaixaDto>();
-            if (fluxos.Any(f => f.Mes < 1))
+            if (fluxos.Any(f => f.Mes is < 1 or > 600))
             {
-                throw new BusinessRuleException(400, "O mês do fluxo de caixa deve ser maior ou igual a 1.");
+                throw new BusinessRuleException(400, "O mês do fluxo de caixa deve ficar entre 1 e 600.");
+            }
+
+            // Fluxo previsto é entrada de caixa; o custo do projeto já entra pelo investimento inicial.
+            if (fluxos.Any(f => f.Valor < 0))
+            {
+                throw new BusinessRuleException(400, "O valor do fluxo de caixa previsto deve ser maior ou igual a 0.");
+            }
+
+            if (fluxos.Any(f => f.Valor > Limites.ValorMonetarioMaximo))
+            {
+                throw new BusinessRuleException(400, Limites.ValorMonetarioAcimaDoLimite);
             }
 
             if (fluxos.GroupBy(f => f.Mes).Any(g => g.Count() > 1))
@@ -152,6 +173,17 @@ namespace Prumo.Application.Services
             if (dto.Data is null || dto.Valor is null)
             {
                 throw new BusinessRuleException(400, Messages.RN04_CamposObrigatorios);
+            }
+
+            // Mesma regra dos lançamentos (RN28): o custo realizado já vem dos lançamentos.
+            if (dto.Valor <= 0 || dto.Data > DateOnly.FromDateTime(DateTime.UtcNow))
+            {
+                throw new BusinessRuleException(400, Messages.RetornoInvalido);
+            }
+
+            if (dto.Valor > Limites.ValorMonetarioMaximo)
+            {
+                throw new BusinessRuleException(400, Limites.ValorMonetarioAcimaDoLimite);
             }
 
             var descricao = string.IsNullOrWhiteSpace(dto.Descricao) ? null : dto.Descricao.Trim();

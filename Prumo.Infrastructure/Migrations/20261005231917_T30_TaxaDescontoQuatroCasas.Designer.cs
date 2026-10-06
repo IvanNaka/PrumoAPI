@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Plantonize.Plantao.Infrastructure;
@@ -11,9 +12,11 @@ using Plantonize.Plantao.Infrastructure;
 namespace Prumo.Infrastructure.Migrations
 {
     [DbContext(typeof(PrumoDbContext))]
-    partial class PrumoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261005231917_T30_TaxaDescontoQuatroCasas")]
+    partial class T30_TaxaDescontoQuatroCasas
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -859,30 +862,6 @@ namespace Prumo.Infrastructure.Migrations
                     b.ToTable("ProjectObjectives", (string)null);
                 });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.ProjectTeam", b =>
-                {
-                    b.Property<Guid>("ProjectId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TeamId")
-                        .HasColumnType("uuid");
-
-                    b.Property<bool>("Active")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime>("CreatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime?>("UpdatedDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("ProjectId", "TeamId");
-
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("ProjectTeams", (string)null);
-                });
-
             modelBuilder.Entity("Prumo.Domain.Entities.RealizedReturn", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1440,25 +1419,6 @@ namespace Prumo.Infrastructure.Migrations
                     b.Navigation("Project");
                 });
 
-            modelBuilder.Entity("Prumo.Domain.Entities.ProjectTeam", b =>
-                {
-                    b.HasOne("Prumo.Domain.Entities.Project", "Project")
-                        .WithMany("ProjectTeams")
-                        .HasForeignKey("ProjectId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Prumo.Domain.Entities.Team", "Team")
-                        .WithMany("Projects")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Project");
-
-                    b.Navigation("Team");
-                });
-
             modelBuilder.Entity("Prumo.Domain.Entities.RealizedReturn", b =>
                 {
                     b.HasOne("Prumo.Domain.Entities.Project", "Project")
@@ -1610,16 +1570,12 @@ namespace Prumo.Infrastructure.Migrations
 
                     b.Navigation("ProjectObjectives");
 
-                    b.Navigation("ProjectTeams");
-
                     b.Navigation("RealizedReturns");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.Team", b =>
                 {
                     b.Navigation("Members");
-
-                    b.Navigation("Projects");
                 });
 
             modelBuilder.Entity("Prumo.Domain.Entities.User", b =>

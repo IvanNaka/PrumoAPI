@@ -88,7 +88,7 @@ namespace Prumo.Tests.Api
             var po = await UserAsync(RoleName.ProductOwner, RoleName.GerenteProjeto);
             var client = Factory.ClientFor(po);
             var portfolio = await PortfolioAsync(po);
-            var valor = await CriarCriterioAsync(client, portfolio.Id, "Valor", 5, "Beneficio");
+            var valor = await CriarCriterioAsync(client, portfolio.Id, "Valor", 9, "Beneficio");
             var esforco = await CriarCriterioAsync(client, portfolio.Id, "Esforço", 1, "Custo");
             var a = await CriarProjetoAsync(client, portfolio.Id, po.Id, "A (valor alto, esforço alto)");
             var b = await CriarProjetoAsync(client, portfolio.Id, po.Id, "B (valor médio, esforço baixo)");
@@ -98,7 +98,9 @@ namespace Prumo.Tests.Api
             Assert.Equal(a, antes.GetProperty("ranking")[0].GetProperty("projetoId").GetGuid());
 
             // Esforço passa a pesar muito mais: B assume a liderança automaticamente.
-            await client.PutAsJsonAsync($"/api/criterios/{esforco}", new { nome = "Esforço", peso = 10, tipo = "Custo" });
+            var pesos = await client.PutAsJsonAsync($"/api/portfolios/{portfolio.Id}/criterios/pesos",
+                new[] { new { criterioId = valor, peso = 1m }, new { criterioId = esforco, peso = 9m } });
+            Assert.Equal(HttpStatusCode.OK, pesos.StatusCode);
 
             var depois = await client.GetFromJsonAsync<JsonElement>($"/api/portfolios/{portfolio.Id}/ranking");
             Assert.Equal(b, depois.GetProperty("ranking")[0].GetProperty("projetoId").GetGuid());
@@ -119,6 +121,21 @@ namespace Prumo.Tests.Api
             var semProjetos = await client.PostAsync($"/api/portfolios/{portfolio.Id}/priorizacao", null);
             Assert.Equal(HttpStatusCode.Conflict, semProjetos.StatusCode);
             Assert.Equal("Não há projetos cadastrados para priorização.", await DetailAsync(semProjetos));
+        }
+
+        [Fact]
+        public async Task PriorizarExigeSomaDosPesosIgualA10()
+        {
+            var po = await UserAsync(RoleName.ProductOwner, RoleName.GerenteProjeto);
+            var client = Factory.ClientFor(po);
+            var portfolio = await PortfolioAsync(po);
+            await CriarCriterioAsync(client, portfolio.Id, "Valor", 6, "Beneficio");
+            await CriarProjetoAsync(client, portfolio.Id, po.Id, "P");
+
+            var response = await client.PostAsync($"/api/portfolios/{portfolio.Id}/priorizacao", null);
+
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+            Assert.Equal("A soma dos pesos dos critérios deve ser exatamente 10.", await DetailAsync(response));
         }
 
         [Theory]

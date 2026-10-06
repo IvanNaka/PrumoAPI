@@ -55,6 +55,13 @@ namespace Prumo.API.Controllers
             return NoContent();
         }
 
+        [HttpPost("{id:guid}/codigo-convite")]
+        [Authorize(Policy = Policies.EditarEquipes)]
+        public async Task<ActionResult<EquipeDto>> RegenerateInviteCode(Guid id)
+        {
+            return Ok(await _teamService.RegenerateInviteCodeAsync(id));
+        }
+
         [HttpGet("{id:guid}/membros")]
         public async Task<ActionResult<IEnumerable<MembroEquipeDto>>> GetMembers(Guid id)
         {

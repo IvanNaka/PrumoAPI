@@ -12,6 +12,9 @@ namespace Prumo.Application.Services
     // PriorizacaoService — UC10, RF18–RF21, Figura 28, F1 (score), F2 (ranking) e F3 (recálculo).
     public class PrioritizationService : IPrioritizationService
     {
+        /// <summary>A soma dos pesos dos critérios de um portfólio deve ser sempre 10.</summary>
+        public const decimal SomaPesos = 10m;
+
         private static readonly EvaluationStatus[] Recalculaveis =
             { EvaluationStatus.Priorizado, EvaluationStatus.Aprovado, EvaluationStatus.Reavaliado };
 
@@ -131,6 +134,11 @@ namespace Prumo.Application.Services
             if (rankeaveis.Count == 0)
             {
                 throw new BusinessRuleException(409, Messages.RN16_SemProjetos);
+            }
+
+            if (criteria.Sum(c => c.Weight) != SomaPesos)
+            {
+                throw new BusinessRuleException(409, Messages.SomaPesosDiferenteDeDez);
             }
 
             // Figura 27: EmAnalise / Reavaliacao / Priorizado -> Priorizado (senão RN22).

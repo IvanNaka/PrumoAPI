@@ -6,7 +6,10 @@ using Prumo.Application.Common;
 
 namespace Prumo.API.Authorization
 {
-    /// <summary>403 gerado por policy de perfil -> ProblemDetails com a mensagem RN27.</summary>
+    /// <summary>
+    /// 403 gerado por policy de perfil -> ProblemDetails com a mensagem RN27 (ou, para quem ainda não
+    /// tem perfil, a orientação de entrar em uma equipe ou criar uma).
+    /// </summary>
     public class ProblemAuthorizationResultHandler : IAuthorizationMiddlewareResultHandler
     {
         private readonly AuthorizationMiddlewareResultHandler _default = new();
@@ -19,7 +22,7 @@ namespace Prumo.API.Authorization
                 {
                     Status = StatusCodes.Status403Forbidden,
                     Title = ProblemTitles.For(403),
-                    Detail = Messages.RN27_PerfilSemPermissao,
+                    Detail = Policies.HasAnyRole(context.User) ? Messages.RN27_PerfilSemPermissao : Messages.SemEquipe,
                 });
                 return;
             }
