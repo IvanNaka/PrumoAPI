@@ -59,6 +59,7 @@ namespace Prumo.Domain.Entities
         // Navegações
         public ICollection<ProjectObjective> ProjectObjectives { get; set; } = new List<ProjectObjective>();
         public ICollection<ProjectEvaluation> ProjectEvaluations { get; set; } = new List<ProjectEvaluation>();
+        public ICollection<ProjectTeam> ProjectTeams { get; set; } = new List<ProjectTeam>();
         public ICollection<ProjectMember> ProjectMembers { get; set; } = new List<ProjectMember>();
         public ICollection<ProjectDependency> Dependencies { get; set; } = new List<ProjectDependency>();
         public ICollection<ProjectDependency> DependentProjects { get; set; } = new List<ProjectDependency>();

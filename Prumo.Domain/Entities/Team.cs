@@ -25,6 +25,9 @@ namespace Prumo.Domain.Entities
 
         public ICollection<TeamUser> Members { get; set; } = new List<TeamUser>();
 
+        /// <summary>Projetos em que a equipe está alocada.</summary>
+        public ICollection<ProjectTeam> Projects { get; set; } = new List<ProjectTeam>();
+
         // Sem caracteres ambíguos (0/O, 1/I/L).
         private const string InviteAlphabet = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
         public const int InviteCodeLength = 8;

@@ -28,6 +28,7 @@ namespace Plantonize.Plantao.Infrastructure
         public DbSet<ProjectDependency> ProjectDependencies => Set<ProjectDependency>();
         public DbSet<Team> Teams => Set<Team>();
         public DbSet<TeamUser> TeamUsers => Set<TeamUser>();
+        public DbSet<ProjectTeam> ProjectTeams => Set<ProjectTeam>();
         public DbSet<Integration> Integrations => Set<Integration>();
         public DbSet<IntegrationSyncLog> IntegrationSyncLogs => Set<IntegrationSyncLog>();
         public DbSet<DataProtectionKey> DataProtectionKeys => Set<DataProtectionKey>();
