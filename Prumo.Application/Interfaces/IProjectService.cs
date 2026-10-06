@@ -10,5 +10,14 @@ namespace Prumo.Application.Interfaces
         Task<ProjetoDetalheDto> CreateAsync(Guid portfolioId, SalvarProjetoDto dto);
         Task<ProjetoDetalheDto> UpdateAsync(Guid id, SalvarProjetoDto dto);
         Task<ProjetoDetalheDto> ChangeStatusAsync(Guid id, string acao);
+
+        /// <summary>GET /projetos/{id}/equipes — equipes alocadas ao projeto.</summary>
+        Task<IEnumerable<EquipeAlocadaDto>> GetTeamsAsync(Guid projectId);
+
+        /// <summary>POST /projetos/{id}/equipes/{equipeId} — idempotente.</summary>
+        Task AllocateTeamAsync(Guid projectId, Guid teamId);
+
+        /// <summary>DELETE /projetos/{id}/equipes/{equipeId} — idempotente.</summary>
+        Task DeallocateTeamAsync(Guid projectId, Guid teamId);
     }
 }

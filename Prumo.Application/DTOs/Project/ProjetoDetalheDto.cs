@@ -24,6 +24,17 @@ namespace Prumo.Application.DTOs.Project
 
         /// <summary>Dependências em que o projeto é origem ou destino, com o risco (F13).</summary>
         public List<Prumo.Application.DTOs.Dependency.DependenciaDto> Dependencias { get; set; } = new();
+
+        /// <summary>Equipes alocadas ao projeto.</summary>
+        public List<EquipeAlocadaDto> Equipes { get; set; } = new();
+    }
+
+    public class EquipeAlocadaDto
+    {
+        public Guid Id { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public int QuantidadeMembros { get; set; }
+        public int CapacidadeMensalTotal { get; set; }
     }
 
     public class NotaCriterioDto
