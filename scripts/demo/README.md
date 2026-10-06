@@ -6,6 +6,7 @@ Scripts PostgreSQL para popular o banco a partir de um único usuário já cadas
 |---|---|
 | `01_seed_demo.sql` | Dá o perfil **Administrador** ao seu usuário e cria 3 portfólios, 11 projetos, critérios (pesos somando 10) e avaliações com score e ranking, orçamento e lançamentos, business case com VPL positivo e retornos, OKRs perto da meta, dependências sem conflito, roadmap em dia, 3 equipes com código de convite e alocadas aos projetos, integração Jira com histórico de sincronizações, issues e worklogs, notificações e histórico de relatórios. Pode ser rodado de novo quantas vezes quiser. |
 | `02_remover_demo.sql` | Remove tudo que a carga criou (IDs que começam com `de`), incluindo o que foi criado dentro dos portfólios de demonstração. Não mexe no seu usuário. |
+| `03_limpar_todas_tabelas.sql` | **Apaga os dados de todas as tabelas**, não só os da demonstração. Mantém só `__EFMigrationsHistory` e `DataProtectionKeys`. Com `manter_usuarios := true` (no início do script), mantém também os usuários reais e seus perfis. Faça backup antes (`pg_dump`). |
 
 ```bash
 psql "<connection string>" -f scripts/demo/01_seed_demo.sql
