@@ -70,6 +70,46 @@ namespace Prumo.Tests.Api
         }
 
         [Fact]
+        public async Task UsuarioComPerfil_EntraEmOutraEquipeEMantemPerfil()
+        {
+            var tl = await UserAsync(RoleName.TechLead);
+            var tlClient = Factory.ClientFor(tl);
+            var equipeA = await (await tlClient.PostAsJsonAsync("/api/equipes", new { nome = NomeEquipe() }))
+                .Content.ReadFromJsonAsync<JsonElement>();
+            var equipeB = await (await tlClient.PostAsJsonAsync("/api/equipes", new { nome = NomeEquipe() }))
+                .Content.ReadFromJsonAsync<JsonElement>();
+            var gerente = await UserAsync(RoleName.GerenteProjeto);
+            var client = Factory.ClientFor(gerente);
+
+            foreach (var equipe in new[] { equipeA, equipeB })
+            {
+                var response = await client.PostAsJsonAsync("/api/onboarding/entrar", new { codigo = equipe.GetProperty("codigoConvite").GetString() });
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+                var session = await response.Content.ReadFromJsonAsync<JsonElement>();
+                Assert.Equal(new[] { "GerenteProjeto" }, Roles(session));
+
+                var membros = await tlClient.GetFromJsonAsync<JsonElement>($"/api/equipes/{equipe.GetProperty("id").GetGuid()}/membros");
+                Assert.Contains(membros.EnumerateArray(), m => m.GetProperty("usuarioId").GetGuid() == gerente.Id);
+            }
+        }
+
+        [Fact]
+        public async Task EntrarNaMesmaEquipeDuasVezes_Recebe409()
+        {
+            var tl = await UserAsync(RoleName.TechLead);
+            var equipe = await (await Factory.ClientFor(tl).PostAsJsonAsync("/api/equipes", new { nome = NomeEquipe() }))
+                .Content.ReadFromJsonAsync<JsonElement>();
+            var codigo = equipe.GetProperty("codigoConvite").GetString();
+            var pendente = await UserAsync();
+
+            Assert.Equal(HttpStatusCode.OK, (await Factory.ClientFor(pendente).PostAsJsonAsync("/api/onboarding/entrar", new { codigo })).StatusCode);
+            var response = await Factory.ClientFor(pendente).PostAsJsonAsync("/api/onboarding/entrar", new { codigo });
+
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+            Assert.Equal("Você já faz parte desta equipe.", await DetailAsync(response));
+        }
+
+        [Fact]
         public async Task CodigoInvalido_Recebe404()
         {
             var pendente = await UserAsync();

@@ -12,7 +12,10 @@ namespace Prumo.Application.Interfaces
         /// <summary>Cria a equipe e torna o usuário TechLead e membro dela.</summary>
         Task<LoginResponseDto> CreateTeamAsync(CriarEquipeOnboardingDto dto);
 
-        /// <summary>Entra na equipe do código de convite como Desenvolvedor.</summary>
+        /// <summary>
+        /// Entra na equipe do código de convite. No primeiro acesso o usuário vira Desenvolvedor;
+        /// quem já tem perfil apenas passa a ser membro de mais uma equipe.
+        /// </summary>
         Task<LoginResponseDto> JoinTeamAsync(EntrarEquipeDto dto);
     }
 }

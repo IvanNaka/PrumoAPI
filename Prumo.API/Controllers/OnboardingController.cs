@@ -27,7 +27,7 @@ namespace Prumo.API.Controllers
             return Ok(await _onboardingService.CreateTeamAsync(dto));
         }
 
-        /// <summary>Entra em uma equipe pelo código de convite; o usuário vira Desenvolvedor. Devolve um novo JWT.</summary>
+        /// <summary>Entra em uma equipe pelo código de convite (também para quem já participa de outra). No primeiro acesso o usuário vira Desenvolvedor. Devolve um novo JWT.</summary>
         [HttpPost("entrar")]
         public async Task<ActionResult<LoginResponseDto>> JoinTeam([FromBody] EntrarEquipeDto dto)
         {

@@ -41,6 +41,7 @@ namespace Prumo.Application.Common
         public const string SemEquipe = "Entre em uma equipe ou crie uma para acessar o Prumo.";
         public const string CodigoConviteInvalido = "Código de convite inválido.";
         public const string JaParticipa = "Você já participa do Prumo.";
+        public const string JaMembroEquipe = "Você já faz parte desta equipe.";
 
         public static string RN22_Transicao(object atual, string acao) =>
             $"Transição de '{atual}' para '{acao}' não permitida.";
