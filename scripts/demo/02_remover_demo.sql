@@ -16,6 +16,7 @@ DELETE FROM "ProjectDependencies" WHERE "PortfolioId"::text LIKE 'de%' OR "Proje
 DELETE FROM "ProjectEvaluation"   WHERE "ProjectId"::text LIKE 'de%' OR "PriorityCriteriaId"::text LIKE 'de%'
                                      OR "ProjectId" IN (SELECT "Id" FROM "Projects" WHERE "PortfolioId"::text LIKE 'de%')
                                      OR "PriorityCriteriaId" IN (SELECT "Id" FROM "PriorityCriteria" WHERE "PortfolioId"::text LIKE 'de%');
+DELETE FROM "ProjectTeams"        WHERE "ProjectId"::text LIKE 'de%' OR "TeamId"::text LIKE 'de%';
 DELETE FROM "Projects"            WHERE "Id"::text LIKE 'de%' OR "PortfolioId"::text LIKE 'de%' OR "OwnerId"::text LIKE 'de%';
 DELETE FROM "PriorityCriteria"    WHERE "PortfolioId"::text LIKE 'de%';
 DELETE FROM "Teams"               WHERE "Id"::text LIKE 'de%';
