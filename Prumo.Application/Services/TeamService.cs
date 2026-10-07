@@ -26,11 +26,23 @@ namespace Prumo.Application.Services
 
         public async Task<IEnumerable<EquipeDto>> GetAllAsync()
         {
-            var teams = await _db.Teams.AsNoTracking()
+            var query = _db.Teams.AsNoTracking()
                 .Include(t => t.Members)
                 .Include(t => t.Portfolio)
-                .OrderBy(t => t.Name)
-                .ToListAsync();
+                .AsQueryable();
+
+            // Administrador vê todas; os demais veem só as equipes de que são membros (pelo usuário ou
+            // pelo e-mail) ou que criaram.
+            if (!_currentUser.IsInRole(RoleName.Administrador))
+            {
+                var userId = _currentUser.RequireUserId();
+                var email = await _db.Users.AsNoTracking().Where(u => u.Id == userId)
+                    .Select(u => u.Email.ToLower()).SingleOrDefaultAsync() ?? string.Empty;
+                query = query.Where(t => t.OwnerUserId == userId
+                    || t.Members.Any(m => m.UserId == userId || (email != string.Empty && m.Email == email)));
+            }
+
+            var teams = await query.OrderBy(t => t.Name).ToListAsync();
             return teams.Select(t => Map(t, CanSeeInviteCode()));
         }
 

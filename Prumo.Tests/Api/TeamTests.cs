@@ -64,5 +64,34 @@ namespace Prumo.Tests.Api
             Assert.Equal(HttpStatusCode.Forbidden, porPo.StatusCode);
             Assert.Equal(HttpStatusCode.OK, leitura.StatusCode);
         }
+
+        [Fact]
+        public async Task Listagem_NaoAdministradorVeSoAsEquipesEmQueEsta()
+        {
+            var admin = await UserAsync(RoleName.Administrador);
+            var dev = await UserAsync(RoleName.Desenvolvedor);
+            var adminClient = Factory.ClientFor(admin);
+
+            async Task<Guid> CriarAsync()
+            {
+                var equipe = await (await adminClient.PostAsJsonAsync("/api/equipes", new { nome = "Squad " + Guid.NewGuid().ToString("N")[..6] }))
+                    .Content.ReadFromJsonAsync<JsonElement>();
+                return equipe.GetProperty("id").GetGuid();
+            }
+
+            var minha = await CriarAsync();
+            var outra = await CriarAsync();
+            await adminClient.PostAsJsonAsync($"/api/equipes/{minha}/membros",
+                new { usuarioId = dev.Id, nome = dev.Name, email = dev.Email, custoHora = 0, capacidadeMensalHoras = 160 });
+
+            var doDev = (await Factory.ClientFor(dev).GetFromJsonAsync<JsonElement>("/api/equipes"))
+                .EnumerateArray().Select(e => e.GetProperty("id").GetGuid()).ToList();
+            var doAdmin = (await adminClient.GetFromJsonAsync<JsonElement>("/api/equipes"))
+                .EnumerateArray().Select(e => e.GetProperty("id").GetGuid()).ToList();
+
+            Assert.Equal(new[] { minha }, doDev);
+            Assert.Contains(minha, doAdmin);
+            Assert.Contains(outra, doAdmin);
+        }
     }
 }
