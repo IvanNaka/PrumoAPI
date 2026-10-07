@@ -41,7 +41,9 @@ namespace Prumo.Application.Services
 
         public async Task<LoginResponseDto> JoinTeamAsync(EntrarEquipeDto dto)
         {
-            var user = await RequirePendingUserAsync();
+            // Quem já participa do Prumo também pode entrar em outras equipes pelo código;
+            // nesse caso mantém os perfis que já tem.
+            var user = await RequireActiveUserAsync();
             var codigo = dto.Codigo?.Trim().ToUpperInvariant() ?? string.Empty;
             if (codigo.Length == 0)
             {
@@ -57,12 +59,19 @@ namespace Prumo.Application.Services
             {
                 AddMembership(team.Id, user);
             }
+            else if (existing.UserId == user.Id)
+            {
+                throw new BusinessRuleException(409, Messages.JaMembroEquipe);
+            }
             else
             {
                 existing.UserId = user.Id;
             }
 
-            user.Roles.Add(new UserRole { UserId = user.Id, Role = RoleName.Desenvolvedor });
+            if (user.Roles.Count == 0)
+            {
+                user.Roles.Add(new UserRole { UserId = user.Id, Role = RoleName.Desenvolvedor });
+            }
             await _db.SaveChangesAsync();
 
             return await _authService.RefreshSessionAsync(user.Id);
@@ -71,16 +80,22 @@ namespace Prumo.Application.Services
         /// <summary>Somente quem ainda não tem perfil passa pelo onboarding.</summary>
         private async Task<User> RequirePendingUserAsync()
         {
+            var user = await RequireActiveUserAsync();
+            if (user.Roles.Count > 0)
+            {
+                throw new BusinessRuleException(409, Messages.JaParticipa);
+            }
+
+            return user;
+        }
+
+        private async Task<User> RequireActiveUserAsync()
+        {
             var userId = _currentUser.RequireUserId();
             var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == userId);
             if (user is null || !user.IsActive)
             {
                 throw new BusinessRuleException(403, Messages.RN03_SemPermissao);
-            }
-
-            if (user.Roles.Count > 0)
-            {
-                throw new BusinessRuleException(409, Messages.JaParticipa);
             }
 
             return user;
