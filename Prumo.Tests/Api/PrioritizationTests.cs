@@ -161,7 +161,7 @@ namespace Prumo.Tests.Api
             var po = await UserAsync(RoleName.ProductOwner, RoleName.GerenteProjeto);
             var client = Factory.ClientFor(po);
             var portfolio = await PortfolioAsync(po);
-            var valor = await CriarCriterioAsync(client, portfolio.Id, "Valor", 3, "Beneficio");
+            var valor = await CriarCriterioAsync(client, portfolio.Id, "Valor", 10, "Beneficio");
             var projeto = await CriarProjetoAsync(client, portfolio.Id, po.Id, "P");
 
             var cedo = await client.PostAsync($"/api/projetos/{projeto}/avaliacao/aprovar", null);
@@ -169,7 +169,7 @@ namespace Prumo.Tests.Api
             Assert.Equal("Apenas projetos priorizados podem ser aprovados ou rejeitados.", await DetailAsync(cedo));
 
             await client.PutAsJsonAsync($"/api/projetos/{projeto}/avaliacoes", new[] { new { criterioId = valor, nota = 4 } });
-            await client.PostAsync($"/api/portfolios/{portfolio.Id}/priorizacao", null);
+            Assert.Equal(HttpStatusCode.OK, (await client.PostAsync($"/api/portfolios/{portfolio.Id}/priorizacao", null)).StatusCode);
             var aprovado = await JsonAsync(await client.PostAsync($"/api/projetos/{projeto}/avaliacao/aprovar", null));
             Assert.Equal("Aprovado", aprovado.GetProperty("statusAvaliacao").GetString());
 
@@ -183,11 +183,13 @@ namespace Prumo.Tests.Api
             var po = await UserAsync(RoleName.ProductOwner, RoleName.GerenteProjeto);
             var client = Factory.ClientFor(po);
             var portfolio = await PortfolioAsync(po);
-            var valor = await CriarCriterioAsync(client, portfolio.Id, "Valor", 3, "Beneficio");
+            var valor = await CriarCriterioAsync(client, portfolio.Id, "Valor", 10, "Beneficio");
             var projeto = await CriarProjetoAsync(client, portfolio.Id, po.Id, "P");
             await client.PutAsJsonAsync($"/api/projetos/{projeto}/avaliacoes", new[] { new { criterioId = valor, nota = 4 } });
-            await client.PostAsync($"/api/portfolios/{portfolio.Id}/priorizacao", null);
+            Assert.Equal(HttpStatusCode.OK, (await client.PostAsync($"/api/portfolios/{portfolio.Id}/priorizacao", null)).StatusCode);
 
+            // A soma dos pesos não pode passar de 10: libera peso antes de criar o critério novo.
+            Assert.Equal(HttpStatusCode.OK, (await client.PutAsJsonAsync($"/api/criterios/{valor}", new { nome = "Valor", peso = 8, tipo = "Beneficio" })).StatusCode);
             var risco = await CriarCriterioAsync(client, portfolio.Id, "Risco", 2, "Custo");
             var reavaliado = await client.GetFromJsonAsync<JsonElement>($"/api/projetos/{projeto}");
             Assert.Equal("Reavaliado", reavaliado.GetProperty("statusAvaliacao").GetString());
