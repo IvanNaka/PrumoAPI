@@ -5,6 +5,12 @@ namespace Prumo.Application.DTOs.Auth
         public string IdToken { get; set; } = string.Empty;
     }
 
+    /// <summary>POST /auth/teste — login das contas simuladas nos testes automatizados.</summary>
+    public class TesteLoginDto
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+
     public class LoginResponseDto
     {
         public string Token { get; set; } = string.Empty;
