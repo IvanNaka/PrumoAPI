@@ -1,0 +1,57 @@
+{
+  "tela": "portfolios_p1_priorizacao",
+  "regrasAprovadas": 23,
+  "violacoes": [
+    {
+      "regra": "color-contrast",
+      "impacto": "serious",
+      "descricao": "Elements must meet minimum color contrast ratio thresholds",
+      "ajuda": "https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI",
+      "elementos": [
+        [
+          ".portfolio-ativo-label"
+        ]
+      ],
+      "quantidade": 1
+    },
+    {
+      "regra": "select-name",
+      "impacto": "critical",
+      "descricao": "Select element must have an accessible name",
+      "ajuda": "https://dequeuniversity.com/rules/axe/4.10/select-name?application=axeAPI",
+      "elementos": [
+        [
+          "tr:nth-child(1) > td:nth-child(2) > select"
+        ],
+        [
+          "tr:nth-child(1) > td:nth-child(3) > select"
+        ],
+        [
+          "tr:nth-child(1) > td:nth-child(4) > select"
+        ],
+        [
+          "tr:nth-child(1) > td:nth-child(5) > select"
+        ],
+        [
+          "tr:nth-child(2) > td:nth-child(2) > select"
+        ],
+        [
+          "tr:nth-child(2) > td:nth-child(3) > select"
+        ],
+        [
+          "tr:nth-child(2) > td:nth-child(4) > select"
+        ],
+        [
+          "tr:nth-child(2) > td:nth-child(5) > select"
+        ],
+        [
+          "tr:nth-child(3) > td:nth-child(2) > select"
+        ],
+        [
+          "tr:nth-child(3) > td:nth-child(3) > select"
+        ]
+      ],
+      "quantidade": 24
+    }
+  ]
+}

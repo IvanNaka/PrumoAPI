@@ -1,0 +1,18 @@
+{
+  "tela": "equipes",
+  "regrasAprovadas": 21,
+  "violacoes": [
+    {
+      "regra": "color-contrast",
+      "impacto": "serious",
+      "descricao": "Elements must meet minimum color contrast ratio thresholds",
+      "ajuda": "https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI",
+      "elementos": [
+        [
+          ".portfolio-ativo-label"
+        ]
+      ],
+      "quantidade": 1
+    }
+  ]
+}

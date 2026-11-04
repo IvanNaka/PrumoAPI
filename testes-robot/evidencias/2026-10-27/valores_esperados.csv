@@ -1,0 +1,365 @@
+﻿origem;indicador;campo;esperado;obtido;diferenca;resultado
+API;okr;progresso inicial;62.5;62.5;0.0;OK
+API;okr;progresso após atualização;87.5;87.5;0.0;OK
+API;okr;Aumentar a satisfação do cliente nos canais digitais;66.31;66.31;0.0;OK
+API;okr;Reduzir o custo operacional;42.5;42.5;0.0;OK
+API;okr;Garantir a continuidade dos sistemas críticos;78.97;78.97;0.0;OK
+API;burnRate projeto;custoRealizado;15000.0;15000.0;0.0;OK
+API;burnRate projeto;burnRateMensal;7500.0;7500.0;0.0;OK
+API;burnRate projeto;projecaoCustoTotal;45000.0;45000.0;0.0;OK
+API;burnRate projeto;percentualConsumido;10.0;10.0;0.0;OK
+API;burnRate projeto;saldo;135000.0;135000.0;0.0;OK
+API;burnRate projeto;estouro;False;False;;OK
+API;ranking;quantidade;4;4;0.0;OK
+API;ranking;1º nome;Alfa;Alfa;;OK
+API;ranking;Alfa score;95.0;95.0;0.0;OK
+API;ranking;2º nome;Gama;Gama;;OK
+API;ranking;Gama score;70.0;70.0;0.0;OK
+API;ranking;3º nome;Beta;Beta;;OK
+API;ranking;Beta score;65.0;65.0;0.0;OK
+API;ranking;4º nome;Delta;Delta;;OK
+API;ranking;Delta score;65.0;65.0;0.0;OK
+UI;ranking tela;Alfa;95.0;95.0;0.0;OK
+UI;ranking tela;Gama;70.0;70.0;0.0;OK
+UI;ranking tela;Beta;65.0;65.0;0.0;OK
+UI;ranking tela;Delta;65.0;65.0;0.0;OK
+API;ranking;quantidade;4;4;0.0;OK
+API;ranking;1º nome;Gama;Gama;;OK
+API;ranking;Gama score;90.0;90.0;0.0;OK
+API;ranking;2º nome;Alfa;Alfa;;OK
+API;ranking;Alfa score;90.0;90.0;0.0;OK
+API;ranking;3º nome;Beta;Beta;;OK
+API;ranking;Beta score;55.0;55.0;0.0;OK
+API;ranking;4º nome;Delta;Delta;;OK
+API;ranking;Delta score;55.0;55.0;0.0;OK
+API;ranking;quantidade;4;4;0.0;OK
+API;ranking;1º nome;Gama;Gama;;OK
+API;ranking;Gama score;90.0;90.0;0.0;OK
+API;ranking;2º nome;Alfa;Alfa;;OK
+API;ranking;Alfa score;90.0;90.0;0.0;OK
+API;ranking;3º nome;Delta;Delta;;OK
+API;ranking;Delta score;57.5;57.5;0.0;OK
+API;ranking;4º nome;Beta;Beta;;OK
+API;ranking;Beta score;55.0;55.0;0.0;OK
+API;ranking;quantidade;5;5;0.0;OK
+API;ranking;1º.nome;Portal do Cliente;Portal do Cliente;;OK
+API;ranking;1º.score;85.0;85.0;0.0;OK
+API;ranking;2º.nome;App Mobile;App Mobile;;OK
+API;ranking;2º.score;65.0;65.0;0.0;OK
+API;ranking;3º.nome;Migração para Nuvem;Migração para Nuvem;;OK
+API;ranking;3º.score;60.0;60.0;0.0;OK
+API;ranking;4º.nome;Chatbot de Atendimento;Chatbot de Atendimento;;OK
+API;ranking;4º.score;60.0;60.0;0.0;OK
+API;ranking;5º.nome;Manutenção do ERP;Manutenção do ERP;;OK
+API;ranking;5º.score;60.0;60.0;0.0;OK
+API;ranking;quantidade;5;5;0.0;OK
+API;ranking;1º.nome;Automação de Faturamento;Automação de Faturamento;;OK
+API;ranking;1º.score;85.0;85.0;0.0;OK
+API;ranking;2º.nome;Segurança da Informação;Segurança da Informação;;OK
+API;ranking;2º.score;80.0;80.0;0.0;OK
+API;ranking;3º.nome;Portal de Fornecedores;Portal de Fornecedores;;OK
+API;ranking;3º.score;65.0;65.0;0.0;OK
+API;ranking;4º.nome;Gestão de Contratos;Gestão de Contratos;;OK
+API;ranking;4º.score;65.0;65.0;0.0;OK
+API;ranking;5º.nome;Renovação do Parque de TI;Renovação do Parque de TI;;OK
+API;ranking;5º.score;50.0;50.0;0.0;OK
+API;dependencia;Integração → Plataforma.emRisco;False;False;;OK
+API;dependencia;Integração → Plataforma.emRisco;True;True;;OK
+API;dependencia;Plataforma → Relatórios.emRisco;True;True;;OK
+API;dependencia;Portal do Cliente → App Mobile;True;True;;OK
+API;dependencia;BI Comercial → Portal do Cliente;False;False;;OK
+API;dependencia;Portal de Fornecedores → Automação de Faturamento;False;False;;OK
+API;capacidade;equipe nova.capacidade;200;200;0.0;OK
+API;capacidade;equipe nova.ocupacao;0;0;0.0;OK
+API;capacidade;equipe nova.classificacao;Subutilizada;Subutilizada;;OK
+API;capacidade;Squad Digital.capacidade;400;400;0.0;OK
+API;capacidade;Squad Digital.demanda;540.0;540.0;0.0;OK
+API;capacidade;Squad Digital.horasMes;130.0;130.0;0.0;OK
+API;capacidade;Squad Digital.ocupacao;135.0;135.0;0.0;OK
+API;capacidade;Squad Digital.utilizacao;32.5;32.5;0.0;OK
+API;capacidade;Squad Digital.classificacao;Sobrecarregada;Sobrecarregada;;OK
+API;capacidade;Squad Operações.capacidade;480;480;0.0;OK
+API;capacidade;Squad Operações.demanda;336.0;336.0;0.0;OK
+API;capacidade;Squad Operações.horasMes;52.0;52.0;0.0;OK
+API;capacidade;Squad Operações.ocupacao;70.0;70.0;0.0;OK
+API;capacidade;Squad Operações.utilizacao;10.83;10.83;0.0;OK
+API;capacidade;Squad Operações.classificacao;Adequada;Adequada;;OK
+UI;capacidade;Squad Digital.ocupacao (tela);135.0;135.0;0.0;OK
+API;qualidade;bugs;5;5;0.0;OK
+API;qualidade;entregas;20;20;0.0;OK
+API;qualidade;razaoBugsPorEntrega;0.25;0.25;0.0;OK
+API;qualidade;indiceQualidade;80.0;80.0;0.0;OK
+API;qualidade;atingiuMeta;False;False;;OK
+API;qualidade projeto;Portal do Cliente.bugs;1;1;0.0;OK
+API;qualidade projeto;Portal do Cliente.entregas;4;4;0.0;OK
+API;qualidade projeto;Portal do Cliente.razaoBugsPorEntrega;0.25;0.25;0.0;OK
+API;qualidade projeto;Portal do Cliente.indiceQualidade;80.0;80.0;0.0;OK
+API;qualidade projeto;App Mobile.bugs;1;1;0.0;OK
+API;qualidade projeto;App Mobile.entregas;4;4;0.0;OK
+API;qualidade projeto;App Mobile.razaoBugsPorEntrega;0.25;0.25;0.0;OK
+API;qualidade projeto;App Mobile.indiceQualidade;80.0;80.0;0.0;OK
+API;qualidade projeto;Manutenção do ERP.bugs;1;1;0.0;OK
+API;qualidade projeto;Manutenção do ERP.entregas;4;4;0.0;OK
+API;qualidade projeto;Manutenção do ERP.razaoBugsPorEntrega;0.25;0.25;0.0;OK
+API;qualidade projeto;Manutenção do ERP.indiceQualidade;80.0;80.0;0.0;OK
+UI;qualidade;indiceQualidade (tela);80.0;80.0;0.0;OK
+UI;burnRate;percentualConsumido (tela);36.68;36.68;0.0;OK
+UI;saude;saude (tela);79.17;79.17;0.0;OK
+UI;alocacaoEstrategica;orcamentoTotal (tela);1300000.0;1300000.0;0.0;OK
+API;alocacaoEstrategica;orcamentoTotal;1300000.0;1300000.0;0.0;OK
+API;alocacaoEstrategica;Run.quantidade;1;1;0.0;OK
+API;alocacaoEstrategica;Run.orcamento;150000.0;150000.0;0.0;OK
+API;alocacaoEstrategica;Run.percentualOrcamento;11.54;11.54;0.0;OK
+API;alocacaoEstrategica;Grow.quantidade;3;3;0.0;OK
+API;alocacaoEstrategica;Grow.orcamento;600000.0;600000.0;0.0;OK
+API;alocacaoEstrategica;Grow.percentualOrcamento;46.15;46.15;0.0;OK
+API;alocacaoEstrategica;Transform.quantidade;2;2;0.0;OK
+API;alocacaoEstrategica;Transform.orcamento;550000.0;550000.0;0.0;OK
+API;alocacaoEstrategica;Transform.percentualOrcamento;42.31;42.31;0.0;OK
+UI;qualidade;indiceQualidade (tela);80.0;80.0;0.0;OK
+UI;leadTime;leadTimeMediano (tela);10.0;10.0;0.0;OK
+UI;vpl;vplEsperado (tela);568872.78;568872.78;0.0;OK
+UI;vpl;vplRealizado (tela);-22138.53;-22138.53;0.0;OK
+UI;alinhamentoOkr;percentualProjetosAlinhados (tela);83.33;83.33;0.0;OK
+UI;alinhamentoOkr;percentualOrcamentoAlinhado (tela);90.77;90.77;0.0;OK
+UI;ranking;top5 1º (tela);85.0;85.0;0.0;OK
+UI;ranking;top5 2º (tela);65.0;65.0;0.0;OK
+UI;ranking;top5 3º (tela);60.0;60.0;0.0;OK
+UI;ranking;top5 4º (tela);60.0;60.0;0.0;OK
+UI;ranking;top5 5º (tela);60.0;60.0;0.0;OK
+API;notificacao;Diretoria: EstouroOrcamento — Chatbot de Atendimento;True;True;;OK
+API;notificacao;Diretoria: EstouroOrcamento — Segurança da Informação;True;True;;OK
+API;notificacao;GerenteProjeto: Atraso — App Mobile;True;True;;OK
+API;notificacao;GerenteProjeto: Atraso — Migração para Nuvem;True;True;;OK
+API;notificacao;GerenteProjeto: EstouroOrcamento — Chatbot de Atendimento;True;True;;OK
+API;notificacao;GerenteProjeto: Risco — App Mobile;True;True;;OK
+API;notificacao;GerenteProjeto: Risco — Portal do Cliente;True;True;;OK
+API;notificacao;ProductOwner: Desalinhamento — BI Comercial;True;True;;OK
+API;notificacao;ProductOwner: EstouroOrcamento — Segurança da Informação;True;True;;OK
+API;notificacao;TechLead: Conflito — Squad Digital;True;True;;OK
+API;burnRate;orcamentoAprovado;1300000.0;1300000.0;0.0;OK
+API;burnRate;custoHoras;46900.0;46900.0;0.0;OK
+API;burnRate;custoLancamentos;430000.0;430000.0;0.0;OK
+API;burnRate;custoRealizado;476900.0;476900.0;0.0;OK
+API;burnRate;burnRateMensal;126690.37;126690.37;0.0;OK
+API;burnRate;projecaoCustoTotal;772219.0;772219.0;0.0;OK
+API;burnRate;saldo;823100.0;823100.0;0.0;OK
+API;burnRate;percentualConsumido;36.68;36.68;0.0;OK
+API;burnRate;Portal do Cliente.custoRealizado;84380.0;84380.0;0.0;OK
+API;burnRate;Portal do Cliente.burnRateMensal;21095.0;21095.0;0.0;OK
+API;burnRate;Portal do Cliente.percentualConsumido;21.1;21.1;0.0;OK
+API;burnRate;App Mobile.custoRealizado;94380.0;94380.0;0.0;OK
+API;burnRate;App Mobile.burnRateMensal;31460.0;31460.0;0.0;OK
+API;burnRate;App Mobile.percentualConsumido;31.46;31.46;0.0;OK
+API;burnRate;Migração para Nuvem.custoRealizado;139380.0;139380.0;0.0;OK
+API;burnRate;Migração para Nuvem.burnRateMensal;22007.37;22007.37;0.0;OK
+API;burnRate;Migração para Nuvem.percentualConsumido;55.75;55.75;0.0;OK
+API;burnRate;Chatbot de Atendimento.custoRealizado;91380.0;91380.0;0.0;OK
+API;burnRate;Chatbot de Atendimento.burnRateMensal;45690.0;45690.0;0.0;OK
+API;burnRate;Chatbot de Atendimento.percentualConsumido;114.23;114.23;0.0;OK
+API;burnRate;Manutenção do ERP.custoRealizado;64380.0;64380.0;0.0;OK
+API;burnRate;Manutenção do ERP.burnRateMensal;6438.0;6438.0;0.0;OK
+API;burnRate;Manutenção do ERP.percentualConsumido;42.92;42.92;0.0;OK
+API;burnRate;BI Comercial.custoRealizado;3000.0;3000.0;0.0;OK
+API;burnRate;BI Comercial.burnRateMensal;0.0;0;0.0;OK
+API;burnRate;BI Comercial.percentualConsumido;2.5;2.5;0.0;OK
+API;burnRate;orcamentoAprovado;1200000.0;1200000.0;0.0;OK
+API;burnRate;custoHoras;19880.0;19880.0;0.0;OK
+API;burnRate;custoLancamentos;249000.0;249000.0;0.0;OK
+API;burnRate;custoRealizado;268880.0;268880.0;0.0;OK
+API;burnRate;burnRateMensal;61450.07;61450.07;0.0;OK
+API;burnRate;projecaoCustoTotal;524236.76;524236.76;0.0;OK
+API;burnRate;saldo;931120.0;931120.0;0.0;OK
+API;burnRate;percentualConsumido;22.41;22.41;0.0;OK
+API;burnRate;Automação de Faturamento.custoRealizado;64940.0;64940.0;0.0;OK
+API;burnRate;Automação de Faturamento.burnRateMensal;19482.0;19482;0.0;OK
+API;burnRate;Automação de Faturamento.percentualConsumido;32.47;32.47;0.0;OK
+API;burnRate;Renovação do Parque de TI.custoRealizado;70000.0;70000.0;0.0;OK
+API;burnRate;Renovação do Parque de TI.burnRateMensal;14000.0;14000.0;0.0;OK
+API;burnRate;Renovação do Parque de TI.percentualConsumido;38.89;38.89;0.0;OK
+API;burnRate;Gestão de Contratos.custoRealizado;75000.0;75000.0;0.0;OK
+API;burnRate;Gestão de Contratos.burnRateMensal;8490.57;8490.57;0.0;OK
+API;burnRate;Gestão de Contratos.percentualConsumido;83.33;83.33;0.0;OK
+API;burnRate;Portal de Fornecedores.custoRealizado;5000.0;5000.0;0.0;OK
+API;burnRate;Portal de Fornecedores.burnRateMensal;0.0;0;0.0;OK
+API;burnRate;Portal de Fornecedores.percentualConsumido;2.27;2.27;0.0;OK
+API;burnRate;Segurança da Informação.custoRealizado;51940.0;51940.0;0.0;OK
+API;burnRate;Segurança da Informação.burnRateMensal;19477.5;19477.5;0.0;OK
+API;burnRate;Segurança da Informação.percentualConsumido;32.46;32.46;0.0;OK
+API;burnRate;Data Lake.custoRealizado;2000.0;2000.0;0.0;OK
+API;burnRate;Data Lake.burnRateMensal;0.0;0;0.0;OK
+API;burnRate;Data Lake.percentualConsumido;0.57;0.57;0.0;OK
+API;saude;saude;79.17;79.17;0.0;OK
+API;saude;contagem.Saudável;5;5;0.0;OK
+API;saude;contagem.Atenção;1;1;0.0;OK
+API;saude;contagem.Crítico;0;0;0.0;OK
+API;saude;classificacao;Saudável;Saudável;;OK
+API;saude;Portal do Cliente.pontuacaoSaude;75;75;0.0;OK
+API;saude;App Mobile.pontuacaoSaude;50;50;0.0;OK
+API;saude;Migração para Nuvem.pontuacaoSaude;75;75;0.0;OK
+API;saude;Chatbot de Atendimento.pontuacaoSaude;75;75;0.0;OK
+API;saude;Manutenção do ERP.pontuacaoSaude;100;100;0.0;OK
+API;saude;BI Comercial.pontuacaoSaude;100;100;0.0;OK
+API;saude;saude;100.0;100;0.0;OK
+API;saude;contagem.Saudável;3;3;0.0;OK
+API;saude;contagem.Atenção;0;0;0.0;OK
+API;saude;contagem.Crítico;0;0;0.0;OK
+API;saude;classificacao;Saudável;Saudável;;OK
+API;saude;Automação de Faturamento.pontuacaoSaude;100;100;0.0;OK
+API;saude;Portal de Fornecedores.pontuacaoSaude;100;100;0.0;OK
+API;saude;Segurança da Informação.pontuacaoSaude;100;100;0.0;OK
+API;alocacaoEstrategica;orcamentoTotal;1300000.0;1300000.0;0.0;OK
+API;alocacaoEstrategica;Run.quantidade;1;1;0.0;OK
+API;alocacaoEstrategica;Run.orcamento;150000.0;150000.0;0.0;OK
+API;alocacaoEstrategica;Run.percentualOrcamento;11.54;11.54;0.0;OK
+API;alocacaoEstrategica;Grow.quantidade;3;3;0.0;OK
+API;alocacaoEstrategica;Grow.orcamento;600000.0;600000.0;0.0;OK
+API;alocacaoEstrategica;Grow.percentualOrcamento;46.15;46.15;0.0;OK
+API;alocacaoEstrategica;Transform.quantidade;2;2;0.0;OK
+API;alocacaoEstrategica;Transform.orcamento;550000.0;550000.0;0.0;OK
+API;alocacaoEstrategica;Transform.percentualOrcamento;42.31;42.31;0.0;OK
+API;alocacaoEstrategica;orcamentoTotal;1200000.0;1200000.0;0.0;OK
+API;alocacaoEstrategica;Run.quantidade;3;3;0.0;OK
+API;alocacaoEstrategica;Run.orcamento;430000.0;430000.0;0.0;OK
+API;alocacaoEstrategica;Run.percentualOrcamento;35.83;35.83;0.0;OK
+API;alocacaoEstrategica;Grow.quantidade;1;1;0.0;OK
+API;alocacaoEstrategica;Grow.orcamento;200000.0;200000.0;0.0;OK
+API;alocacaoEstrategica;Grow.percentualOrcamento;16.67;16.67;0.0;OK
+API;alocacaoEstrategica;Transform.quantidade;2;2;0.0;OK
+API;alocacaoEstrategica;Transform.orcamento;570000.0;570000.0;0.0;OK
+API;alocacaoEstrategica;Transform.percentualOrcamento;47.5;47.5;0.0;OK
+API;qualidade;bugs;5;5;0.0;OK
+API;qualidade;entregas;20;20;0.0;OK
+API;qualidade;razaoBugsPorEntrega;0.25;0.25;0.0;OK
+API;qualidade;indiceQualidade;80.0;80.0;0.0;OK
+API;qualidade;bugs;2;2;0.0;OK
+API;qualidade;entregas;8;8;0.0;OK
+API;qualidade;razaoBugsPorEntrega;0.25;0.25;0.0;OK
+API;qualidade;indiceQualidade;80.0;80.0;0.0;OK
+API;capacidade;capacidade;400;400;0.0;OK
+API;capacidade;demanda;540.0;540.0;0.0;OK
+API;capacidade;horasMes;130.0;130.0;0.0;OK
+API;capacidade;ocupacao;135.0;135.0;0.0;OK
+API;capacidade;utilizacao;32.5;32.5;0.0;OK
+API;capacidade;classificacao;Sobrecarregada;Sobrecarregada;;OK
+API;capacidade;mes;2026-10;2026-10;;OK
+API;capacidade;capacidade;480;480;0.0;OK
+API;capacidade;demanda;336.0;336.0;0.0;OK
+API;capacidade;horasMes;52.0;52.0;0.0;OK
+API;capacidade;ocupacao;70.0;70.0;0.0;OK
+API;capacidade;utilizacao;10.83;10.83;0.0;OK
+API;capacidade;classificacao;Adequada;Adequada;;OK
+API;capacidade;mes;2026-10;2026-10;;OK
+API;leadTime;quantidade;25;25;0.0;OK
+API;leadTime;leadTimeMediano;10.0;10;0.0;OK
+API;leadTime;leadTimeMedio;16.0;16;0.0;OK
+API;leadTime;p85;50.0;50;0.0;OK
+API;leadTime;quantidade;10;10;0.0;OK
+API;leadTime;leadTimeMediano;10.0;10;0.0;OK
+API;leadTime;leadTimeMedio;16.0;16;0.0;OK
+API;leadTime;p85;37.75;37.75;0.0;OK
+API;vpl;vplEsperado;568872.78;568872.78;0.0;OK
+API;vpl;vplRealizado;-22138.53;-22138.53;0.0;OK
+API;vpl;diferenca;-591011.31;-591011.31;0.0;OK
+API;vpl;percentualAtingimento;-3.89;-3.89;0.0;OK
+API;vpl;vplEsperado;330624.27;330624.27;0.0;OK
+API;vpl;vplRealizado;21322.6;21322.6;0.0;OK
+API;vpl;diferenca;-309301.67;-309301.67;0.0;OK
+API;vpl;percentualAtingimento;6.45;6.45;0.0;OK
+API;alinhamentoOkr;totalProjetos;6;6;0.0;OK
+API;alinhamentoOkr;projetosAlinhados;5;5;0.0;OK
+API;alinhamentoOkr;percentualProjetosAlinhados;83.33;83.33;0.0;OK
+API;alinhamentoOkr;percentualOrcamentoAlinhado;90.77;90.77;0.0;OK
+API;alinhamentoOkr;progresso.Aumentar a satisfação do cliente nos canais digitais;66.31;66.31;0.0;OK
+API;alinhamentoOkr;progresso.Reduzir o custo operacional;42.5;42.5;0.0;OK
+API;alinhamentoOkr;progresso.Garantir a continuidade dos sistemas críticos;78.97;78.97;0.0;OK
+API;alinhamentoOkr;desalinhados;['BI Comercial'];['BI Comercial'];;OK
+API;alinhamentoOkr;totalProjetos;6;6;0.0;OK
+API;alinhamentoOkr;projetosAlinhados;6;6;0.0;OK
+API;alinhamentoOkr;percentualProjetosAlinhados;100.0;100;0.0;OK
+API;alinhamentoOkr;percentualOrcamentoAlinhado;100.0;100;0.0;OK
+API;alinhamentoOkr;progresso.Reduzir o custo operacional;42.5;42.5;0.0;OK
+API;alinhamentoOkr;progresso.Garantir a continuidade dos sistemas críticos;78.97;78.97;0.0;OK
+API;alinhamentoOkr;desalinhados;[];[];;OK
+API;ranking;quantidade;5;5;0.0;OK
+API;ranking;1º.nome;Portal do Cliente;Portal do Cliente;;OK
+API;ranking;1º.score;85.0;85.0;0.0;OK
+API;ranking;2º.nome;App Mobile;App Mobile;;OK
+API;ranking;2º.score;65.0;65.0;0.0;OK
+API;ranking;3º.nome;Migração para Nuvem;Migração para Nuvem;;OK
+API;ranking;3º.score;60.0;60.0;0.0;OK
+API;ranking;4º.nome;Chatbot de Atendimento;Chatbot de Atendimento;;OK
+API;ranking;4º.score;60.0;60.0;0.0;OK
+API;ranking;5º.nome;Manutenção do ERP;Manutenção do ERP;;OK
+API;ranking;5º.score;60.0;60.0;0.0;OK
+API;ranking;quantidade;5;5;0.0;OK
+API;ranking;1º.nome;Automação de Faturamento;Automação de Faturamento;;OK
+API;ranking;1º.score;85.0;85.0;0.0;OK
+API;ranking;2º.nome;Segurança da Informação;Segurança da Informação;;OK
+API;ranking;2º.score;80.0;80.0;0.0;OK
+API;ranking;3º.nome;Portal de Fornecedores;Portal de Fornecedores;;OK
+API;ranking;3º.score;65.0;65.0;0.0;OK
+API;ranking;4º.nome;Gestão de Contratos;Gestão de Contratos;;OK
+API;ranking;4º.score;65.0;65.0;0.0;OK
+API;ranking;5º.nome;Renovação do Parque de TI;Renovação do Parque de TI;;OK
+API;ranking;5º.score;50.0;50.0;0.0;OK
+API;vpl projeto;Portal do Cliente.vplEsperado;341381.82;341381.82;0.0;OK
+API;vpl projeto;Portal do Cliente.vplRealizado;27490.29;27490.29;0.0;OK
+API;vpl projeto;App Mobile.vplEsperado;151660.64;151660.64;0.0;OK
+API;vpl projeto;App Mobile.vplRealizado;-50220.68;-50220.68;0.0;OK
+API;vpl projeto;Manutenção do ERP.vplEsperado;75830.32;75830.32;0.0;OK
+API;vpl projeto;Manutenção do ERP.vplRealizado;591.86;591.86;0.0;OK
+API;burnRate projeto;Portal do Cliente.custoHoras;9380.0;9380.0;0.0;OK
+API;burnRate projeto;Portal do Cliente.custoLancamentos;75000.0;75000.0;0.0;OK
+API;burnRate projeto;Portal do Cliente.custoRealizado;84380.0;84380.0;0.0;OK
+API;burnRate projeto;Portal do Cliente.burnRateMensal;21095.0;21095.0;0.0;OK
+API;burnRate projeto;Portal do Cliente.projecaoCustoTotal;168760.0;168760.0;0.0;OK
+API;burnRate projeto;Portal do Cliente.percentualConsumido;21.1;21.1;0.0;OK
+API;burnRate projeto;Portal do Cliente.saldo;315620.0;315620.0;0.0;OK
+API;burnRate projeto;Portal do Cliente.estouro;False;False;;OK
+API;burnRate projeto;Portal do Cliente.riscoEstouro;False;False;;OK
+API;burnRate projeto;App Mobile.custoHoras;9380.0;9380.0;0.0;OK
+API;burnRate projeto;App Mobile.custoLancamentos;85000.0;85000.0;0.0;OK
+API;burnRate projeto;App Mobile.custoRealizado;94380.0;94380.0;0.0;OK
+API;burnRate projeto;App Mobile.burnRateMensal;31460.0;31460.0;0.0;OK
+API;burnRate projeto;App Mobile.projecaoCustoTotal;157300.0;157300.0;0.0;OK
+API;burnRate projeto;App Mobile.percentualConsumido;31.46;31.46;0.0;OK
+API;burnRate projeto;App Mobile.saldo;205620.0;205620.0;0.0;OK
+API;burnRate projeto;App Mobile.estouro;False;False;;OK
+API;burnRate projeto;App Mobile.riscoEstouro;False;False;;OK
+API;burnRate projeto;Migração para Nuvem.custoHoras;9380.0;9380.0;0.0;OK
+API;burnRate projeto;Migração para Nuvem.custoLancamentos;130000.0;130000.0;0.0;OK
+API;burnRate projeto;Migração para Nuvem.custoRealizado;139380.0;139380.0;0.0;OK
+API;burnRate projeto;Migração para Nuvem.burnRateMensal;22007.37;22007.37;0.0;OK
+API;burnRate projeto;Migração para Nuvem.projecaoCustoTotal;139380.0;139380.0;0.0;OK
+API;burnRate projeto;Migração para Nuvem.percentualConsumido;55.75;55.75;0.0;OK
+API;burnRate projeto;Migração para Nuvem.saldo;110620.0;110620.0;0.0;OK
+API;burnRate projeto;Migração para Nuvem.estouro;False;False;;OK
+API;burnRate projeto;Migração para Nuvem.riscoEstouro;False;False;;OK
+API;burnRate projeto;Chatbot de Atendimento.custoHoras;9380.0;9380.0;0.0;OK
+API;burnRate projeto;Chatbot de Atendimento.custoLancamentos;82000.0;82000.0;0.0;OK
+API;burnRate projeto;Chatbot de Atendimento.custoRealizado;91380.0;91380.0;0.0;OK
+API;burnRate projeto;Chatbot de Atendimento.burnRateMensal;45690.0;45690.0;0.0;OK
+API;burnRate projeto;Chatbot de Atendimento.projecaoCustoTotal;228450.0;228450.0;0.0;OK
+API;burnRate projeto;Chatbot de Atendimento.percentualConsumido;114.23;114.23;0.0;OK
+API;burnRate projeto;Chatbot de Atendimento.saldo;-11380.0;-11380.0;0.0;OK
+API;burnRate projeto;Chatbot de Atendimento.estouro;True;True;;OK
+API;burnRate projeto;Chatbot de Atendimento.riscoEstouro;True;True;;OK
+API;burnRate projeto;Manutenção do ERP.custoHoras;9380.0;9380.0;0.0;OK
+API;burnRate projeto;Manutenção do ERP.custoLancamentos;55000.0;55000.0;0.0;OK
+API;burnRate projeto;Manutenção do ERP.custoRealizado;64380.0;64380.0;0.0;OK
+API;burnRate projeto;Manutenção do ERP.burnRateMensal;6438.0;6438.0;0.0;OK
+API;burnRate projeto;Manutenção do ERP.projecaoCustoTotal;78329.0;78329.0;0.0;OK
+API;burnRate projeto;Manutenção do ERP.percentualConsumido;42.92;42.92;0.0;OK
+API;burnRate projeto;Manutenção do ERP.saldo;85620.0;85620.0;0.0;OK
+API;burnRate projeto;Manutenção do ERP.estouro;False;False;;OK
+API;burnRate projeto;Manutenção do ERP.riscoEstouro;False;False;;OK
+API;burnRate projeto;BI Comercial.custoHoras;0.0;0;0.0;OK
+API;burnRate projeto;BI Comercial.custoLancamentos;3000.0;3000.0;0.0;OK
+API;burnRate projeto;BI Comercial.custoRealizado;3000.0;3000.0;0.0;OK
+API;burnRate projeto;BI Comercial.burnRateMensal;0.0;0;0.0;OK
+API;burnRate projeto;BI Comercial.projecaoCustoTotal;0.0;0;0.0;OK
+API;burnRate projeto;BI Comercial.percentualConsumido;2.5;2.5;0.0;OK
+API;burnRate projeto;BI Comercial.saldo;117000.0;117000.0;0.0;OK
+API;burnRate projeto;BI Comercial.estouro;False;False;;OK
+API;burnRate projeto;BI Comercial.riscoEstouro;False;False;;OK
