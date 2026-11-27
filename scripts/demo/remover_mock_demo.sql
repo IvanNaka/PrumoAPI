@@ -8,71 +8,72 @@
 -- Não toca em usuários, perfis, integrações nem em outros portfólios.
 --
 -- Uso: cole no SQL Editor do Supabase e clique em Run, ou:
---       psql "<connection string>" -v ON_ERROR_STOP=1 -f remover_mock_demo.sql
--- Pode rodar mais de uma vez (se não houver mock, não faz nada).
+--      psql "<connection string>" -v ON_ERROR_STOP=1 -f remover_mock_demo.sql
+--
+-- É um bloco único (sem tabelas temporárias) e pula tabelas que não existirem
+-- no banco. Pode rodar mais de uma vez: sem mock, não faz nada.
 -- =============================================================================
-BEGIN;
+DO $$
+DECLARE
+    v_portfolio  uuid   := 'de300000-0000-4000-8000-000000000001';
+    v_projects   uuid[];
+    v_teams      uuid[];
+    v_objectives uuid[] := ARRAY['de300000-0000-4000-8000-000000000301',
+                                 'de300000-0000-4000-8000-000000000302',
+                                 'de300000-0000-4000-8000-000000000303']::uuid[];
+    v_entities   uuid[];
+    passo        record;
+    n            bigint;
+    total        bigint := 0;
+BEGIN
+    SELECT coalesce(array_agg("Id"), '{}') INTO v_projects FROM "Projects" WHERE "PortfolioId" = v_portfolio;
+    SELECT coalesce(array_agg("Id"), '{}') INTO v_teams FROM "Teams"
+     WHERE "PortfolioId" = v_portfolio
+        OR "Id" IN ('de300000-0000-4000-8000-000000000401', 'de300000-0000-4000-8000-000000000402');
+    v_entities := ARRAY[v_portfolio] || v_projects || v_teams || v_objectives;
 
-CREATE TEMP TABLE demo_portfolio ON COMMIT DROP AS
-SELECT 'de300000-0000-4000-8000-000000000001'::uuid AS id;
+    -- Ordem: filhos antes dos pais. $1 = portfólio, $2 = projetos, $3 = equipes, $4 = OKRs, $5 = todos os ids.
+    FOR passo IN SELECT * FROM (VALUES
+        (1,  'Worklogs',            'DELETE FROM "Worklogs" WHERE "IssueId" IN (SELECT "Id" FROM "Issues" WHERE "ProjectId" = ANY($2))'),
+        (2,  'Issues',              'DELETE FROM "Issues" WHERE "ProjectId" = ANY($2)'),
+        (3,  'CashFlowForecasts',   'DELETE FROM "CashFlowForecasts" WHERE "BusinessCaseId" IN (SELECT "Id" FROM "BusinessCases" WHERE "ProjectId" = ANY($2))'),
+        (4,  'BusinessCases',       'DELETE FROM "BusinessCases" WHERE "ProjectId" = ANY($2)'),
+        (5,  'RealizedReturns',     'DELETE FROM "RealizedReturns" WHERE "ProjectId" = ANY($2)'),
+        (6,  'BudgetExpenses',      'DELETE FROM "BudgetExpenses" WHERE "ProjectId" = ANY($2)'),
+        (7,  'Budgets',             'DELETE FROM "Budgets" WHERE "ProjectId" = ANY($2)'),
+        (8,  'ProjectEvaluation',   'DELETE FROM "ProjectEvaluation" WHERE "ProjectId" = ANY($2) OR "PriorityCriteriaId" IN (SELECT "Id" FROM "PriorityCriteria" WHERE "PortfolioId" = $1)'),
+        (9,  'ProjectDependencies', 'DELETE FROM "ProjectDependencies" WHERE "PortfolioId" = $1 OR "ProjectId" = ANY($2) OR "DependsOnProjectId" = ANY($2)'),
+        (10, 'ProjectObjectives',   'DELETE FROM "ProjectObjectives" WHERE "ProjectId" = ANY($2) OR "ObjectiveId" = ANY($4)'),
+        (11, 'ProjectMembers',      'DELETE FROM "ProjectMembers" WHERE "ProjectId" = ANY($2)'),
+        (12, 'ProjectTeams',        'DELETE FROM "ProjectTeams" WHERE "ProjectId" = ANY($2) OR "TeamId" = ANY($3)'),
+        (13, 'RoadmapItems',        'DELETE FROM "RoadmapItems" WHERE "PortfolioId" = $1 OR "ProjectId" = ANY($2)'),
+        (14, 'Reports',             'DELETE FROM "Reports" WHERE "PortfolioId" = $1'),
+        (15, 'Alerts',              'DELETE FROM "Alerts" WHERE "EntityId" = ANY($5)'),
+        (16, 'TeamUsers',           'DELETE FROM "TeamUsers" WHERE "TeamId" = ANY($3)'),
+        (17, 'Teams',               'DELETE FROM "Teams" WHERE "Id" = ANY($3)'),
+        (18, 'Projects',            'DELETE FROM "Projects" WHERE "Id" = ANY($2)'),
+        (19, 'PriorityCriteria',    'DELETE FROM "PriorityCriteria" WHERE "PortfolioId" = $1'),
+        (20, 'PortfolioObjectives', 'DELETE FROM "PortfolioObjectives" WHERE "PortfolioId" = $1 OR "ObjectiveId" = ANY($4)'),
+        (21, 'KeyResults',          'DELETE FROM "KeyResults" WHERE "ObjectiveId" = ANY($4)'),
+        (22, 'Objectives',          'DELETE FROM "Objectives" WHERE "Id" = ANY($4)'),
+        (23, 'PortfolioMembers',    'DELETE FROM "PortfolioMembers" WHERE "PortfolioId" = $1'),
+        (24, 'Portfolios',          'DELETE FROM "Portfolios" WHERE "Id" = $1')
+    ) AS s(ordem, tabela, comando) ORDER BY ordem
+    LOOP
+        IF to_regclass(format('%I', passo.tabela)) IS NULL THEN
+            RAISE NOTICE 'Tabela % não existe neste banco; pulando.', passo.tabela;
+            CONTINUE;
+        END IF;
+        EXECUTE passo.comando USING v_portfolio, v_projects, v_teams, v_objectives, v_entities;
+        GET DIAGNOSTICS n = ROW_COUNT;
+        total := total + n;
+        IF n > 0 THEN
+            RAISE NOTICE '%: % linha(s) removida(s).', passo.tabela, n;
+        END IF;
+    END LOOP;
 
-CREATE TEMP TABLE demo_projects ON COMMIT DROP AS
-SELECT "Id" AS id FROM "Projects" WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio);
-
-CREATE TEMP TABLE demo_teams ON COMMIT DROP AS
-SELECT "Id" AS id FROM "Teams"
- WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio)
-    OR "Id" IN ('de300000-0000-4000-8000-000000000401', 'de300000-0000-4000-8000-000000000402');
-
-CREATE TEMP TABLE demo_objectives ON COMMIT DROP AS
-SELECT unnest(ARRAY['de300000-0000-4000-8000-000000000301',
-                    'de300000-0000-4000-8000-000000000302',
-                    'de300000-0000-4000-8000-000000000303']::uuid[]) AS id;
-
--- Issues e worklogs ("Jira")
-DELETE FROM "Worklogs"  WHERE "IssueId" IN (SELECT "Id" FROM "Issues" WHERE "ProjectId" IN (SELECT id FROM demo_projects));
-DELETE FROM "Issues"    WHERE "ProjectId" IN (SELECT id FROM demo_projects);
-
--- Financeiro
-DELETE FROM "CashFlowForecasts" WHERE "BusinessCaseId" IN (SELECT "Id" FROM "BusinessCases" WHERE "ProjectId" IN (SELECT id FROM demo_projects));
-DELETE FROM "BusinessCases"     WHERE "ProjectId" IN (SELECT id FROM demo_projects);
-DELETE FROM "RealizedReturns"   WHERE "ProjectId" IN (SELECT id FROM demo_projects);
-DELETE FROM "BudgetExpenses"    WHERE "ProjectId" IN (SELECT id FROM demo_projects);
-DELETE FROM "Budgets"           WHERE "ProjectId" IN (SELECT id FROM demo_projects);
-
--- Priorização, dependências e vínculos dos projetos
-DELETE FROM "ProjectEvaluation"   WHERE "ProjectId" IN (SELECT id FROM demo_projects);
-DELETE FROM "ProjectDependencies" WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio)
-                                     OR "ProjectId" IN (SELECT id FROM demo_projects)
-                                     OR "DependsOnProjectId" IN (SELECT id FROM demo_projects);
-DELETE FROM "ProjectObjectives"   WHERE "ProjectId" IN (SELECT id FROM demo_projects) OR "ObjectiveId" IN (SELECT id FROM demo_objectives);
-DELETE FROM "ProjectMembers"      WHERE "ProjectId" IN (SELECT id FROM demo_projects);
-DELETE FROM "ProjectTeams"        WHERE "ProjectId" IN (SELECT id FROM demo_projects) OR "TeamId" IN (SELECT id FROM demo_teams);
-DELETE FROM "RoadmapItems"        WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio) OR "ProjectId" IN (SELECT id FROM demo_projects);
-DELETE FROM "Reports"             WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio);
-
--- Notificações geradas a partir do mock
-DELETE FROM "Alerts" WHERE "EntityId" IN (SELECT id FROM demo_portfolio UNION ALL SELECT id FROM demo_projects
-                                          UNION ALL SELECT id FROM demo_teams UNION ALL SELECT id FROM demo_objectives);
-
--- Equipes
-DELETE FROM "TeamUsers" WHERE "TeamId" IN (SELECT id FROM demo_teams);
-DELETE FROM "Teams"     WHERE "Id" IN (SELECT id FROM demo_teams);
-
--- Projetos e critérios
-DELETE FROM "Projects"         WHERE "Id" IN (SELECT id FROM demo_projects);
-DELETE FROM "PriorityCriteria" WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio);
-
--- OKRs
-DELETE FROM "PortfolioObjectives" WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio) OR "ObjectiveId" IN (SELECT id FROM demo_objectives);
-DELETE FROM "KeyResults"          WHERE "ObjectiveId" IN (SELECT id FROM demo_objectives);
-DELETE FROM "Objectives"          WHERE "Id" IN (SELECT id FROM demo_objectives);
-
--- Portfólio
-DELETE FROM "PortfolioMembers" WHERE "PortfolioId" IN (SELECT id FROM demo_portfolio);
-DELETE FROM "Portfolios"       WHERE "Id" IN (SELECT id FROM demo_portfolio);
-
-COMMIT;
+    RAISE NOTICE 'Remoção concluída: % linha(s) no total.', total;
+END $$;
 
 SELECT CASE WHEN EXISTS (SELECT 1 FROM "Portfolios" WHERE "Id" = 'de300000-0000-4000-8000-000000000001')
             THEN 'ATENÇÃO: o portfólio do mock ainda existe'
