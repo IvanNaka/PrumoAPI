@@ -183,7 +183,7 @@ PO associa o OKR ao portfólio
     Abrir Tela    /portfolios/${PORTFOLIO_ID}/visao-geral
     ${seletor}=    Set Variable    xpath=//*[.//h2[normalize-space(.)='OKRs do portfólio']]//select
     Wait Until Element Is Visible    ${seletor}
-    Select From List By Label    ${seletor}    ${TITULO_OKR}
+    Selecionar    ${seletor}    ${TITULO_OKR}    por=label
     Clicar No Botao    Associar OKR
     Wait Until Element Is Visible    xpath=//*[.//h2[normalize-space(.)='OKRs do portfólio']]//*[normalize-space(.)='${TITULO_OKR}']
     ${associados}=    GET On Session    ProductOwner    /api/portfolios/${PORTFOLIO_ID}/okrs    expected_status=200

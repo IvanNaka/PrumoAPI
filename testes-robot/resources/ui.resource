@@ -112,7 +112,7 @@ Preencher
 Selecionar
     [Arguments]    ${locator}    ${valor}    ${por}=value
     Wait Until Element Is Visible    ${locator}
-    Wait Until Keyword Succeeds    5s    250ms    Run Keyword    Select From List By ${por}    ${locator}    ${valor}
+    Wait Until Keyword Succeeds    15s    500ms    Run Keyword    Select From List By ${por}    ${locator}    ${valor}
 
 Clicar
     [Documentation]    Espera o elemento ficar visível e habilitado e clica.

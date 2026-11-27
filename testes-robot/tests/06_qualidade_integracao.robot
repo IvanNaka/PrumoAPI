@@ -98,7 +98,7 @@ Falha de autenticação no Jira é tratada (UC16 / Figura 29)
     Wait Until Page Contains    Erro de conexão
 
 # ---------- Sincronização real com o projeto de testes do Jira (seção 4.9 d) ----------
-Sincronização importa issues dos quatro tipos e worklogs
+Sincronização importa as issues do projeto de testes
     [Tags]    RF47    UC16    api    jira    persona:Desenvolvedor    critico
     Precisa Do Jira
     Configurar Jira    ${JIRA_TOKEN}
@@ -106,15 +106,23 @@ Sincronização importa issues dos quatro tipos e worklogs
     Should Be Equal    ${i.json()}[status]    Conectada
     ${log}=    Sincronizar E Aguardar
     Should Be True    ${log}[sucesso]    ${log}[mensagemErro]
-    Should Be True    ${log}[issuesProcessadas] > 0
-    Should Be True    ${log}[worklogsProcessados] > 0
-    ${ind}=    GET On Session    Desenvolvedor    /api/projetos/${PROJETO_JIRA}/indicadores    expected_status=200
-    ...    params=de=2000-01-01
-    FOR    ${tipo}    IN    Story    Task    Feature    Bug
-        Dictionary Should Contain Key    ${ind.json()}[qualidade][porTipo]    ${tipo}
-    END
-    Set Suite Variable    ${TOTAL_ISSUES}    ${ind.json()}[saude][totalIssues]
-    Should Be True    ${TOTAL_ISSUES} > 0
+    Should Be True    ${log}[issuesProcessadas] > 0    Nenhuma issue importada do projeto ${JIRA_PROJETO}.
+    Set Suite Variable    ${LOG_SINCRONIZACAO}    ${log}
+    ${ind}=    Indicadores Do Projeto Jira
+    Should Be True    ${ind}[saude][totalIssues] > 0
+    Set Suite Variable    ${TOTAL_ISSUES}    ${ind}[saude][totalIssues]
+
+Projeto de testes tem os quatro tipos de issue e worklogs (seção 4.3.3)
+    [Documentation]    A massa do Jira deve ter Story, Task, Feature e Bug e worklogs. Os tipos são contados entre
+    ...    as issues concluídas (indicador de qualidade, F8); os worklogs, pelo log da sincronização.
+    [Tags]    RF47    UC16    api    jira    persona:Desenvolvedor
+    Precisa Do Jira
+    Skip If    not $TOTAL_ISSUES    Depende da primeira sincronização.
+    ${ind}=    Indicadores Do Projeto Jira
+    ${por_tipo}=    Set Variable    ${ind}[qualidade][porTipo]
+    ${faltando}=    Evaluate    [t for t in ('Story', 'Task', 'Feature', 'Bug') if not $por_tipo.get(t)]
+    Should Be Empty    ${faltando}    Tipos sem issues concluídas no projeto ${JIRA_PROJETO}: ${faltando} (contagem: ${por_tipo})
+    Should Be True    ${LOG_SINCRONIZACAO}[worklogsProcessados] > 0    Nenhum worklog importado do projeto ${JIRA_PROJETO}.
 
 Segunda sincronização não duplica registros
     [Tags]    RF47    UC16    api    jira    persona:Desenvolvedor    critico
@@ -122,9 +130,9 @@ Segunda sincronização não duplica registros
     Skip If    not $TOTAL_ISSUES    Depende da primeira sincronização.
     ${log}=    Sincronizar E Aguardar
     Should Be True    ${log}[sucesso]    ${log}[mensagemErro]
-    ${ind}=    GET On Session    Desenvolvedor    /api/projetos/${PROJETO_JIRA}/indicadores    expected_status=200
-    ...    params=de=2000-01-01
-    Should Be Equal As Integers    ${ind.json()}[saude][totalIssues]    ${TOTAL_ISSUES}
+    ${ind}=    Indicadores Do Projeto Jira
+    Should Be Equal As Integers    ${ind}[saude][totalIssues]    ${TOTAL_ISSUES}
+    Should Be Equal As Integers    ${log}[issuesProcessadas]    ${LOG_SINCRONIZACAO}[issuesProcessadas]
 
 Intervalo configurado é respeitado pela sincronização automática
     [Documentation]    Logo após uma sincronização, o agendador (que roda a cada minuto) não pode disparar outra
@@ -141,9 +149,12 @@ Intervalo configurado é respeitado pela sincronização automática
 Credenciais inválidas no Jira real geram erro de autenticação
     [Tags]    RF47    UC16    api    jira    persona:Desenvolvedor
     Precisa Do Jira
-    Configurar Jira    token-invalido-${TOKEN_ERRADO}
+    # Salvar já testa a conexão: com token inválido, a própria gravação responde RN24.
+    ${r}=    Configurar Jira    token-invalido-${TOKEN_ERRADO}    status=400
+    Validar Problem Details    ${r}    400    ${RN24}
     ${r}=    POST On Session    Desenvolvedor    /api/integracoes/jira/testar    expected_status=400
     Validar Problem Details    ${r}    400    ${RN24}
+    Integracao Deve Ter    status    ErroConexao
     [Teardown]    Run Keyword If    $JIRA_URL    Configurar Jira    ${JIRA_TOKEN}
 
 
@@ -154,6 +165,7 @@ Preparar Suite
     ${p}=    GET On Session    QA    /api/portfolios/${PORTFOLIO_VALIDACAO_1}    expected_status=200
     Preparar Oraculo    ${p.json()}[dataCriacao]
     Set Suite Variable    ${TOTAL_ISSUES}    ${0}
+    Set Suite Variable    ${LOG_SINCRONIZACAO}    ${None}
     Set Suite Variable    ${URL_JIRA}    ${{ $JIRA_URL or $URL_INVALIDA }}
     Set Suite Variable    ${EMAIL_JIRA}    ${{ $JIRA_EMAIL or 'robot@prumo.test' }}
     Set Suite Variable    ${TOKEN_ERRADO}    token-errado-do-robot
@@ -163,21 +175,47 @@ Preparar Suite
 Preparar Projeto Do Jira
     [Documentation]    Projeto do Prumo ligado ao projeto de testes do Jira (JiraProjectKey).
     ${gerente}=    Entrar Na API Como    GerenteProjeto
+    Set Suite Variable    ${GERENTE_ID}    ${gerente}[id]
+    Liberar Chave Jira De Execucoes Anteriores
     ${nome}=    Nome Unico    Portfolio Jira
     ${portfolio}=    Criar Portfolio Via API    GerenteProjeto    ${nome}    ${gerente}[id]
     ${dev}=    Entrar Na API Como    Desenvolvedor
     Adicionar Membro Ao Portfolio    GerenteProjeto    ${portfolio}[id]    ${dev}[id]
     ${r}=    Criar Projeto Via API    GerenteProjeto    ${portfolio}[id]    Projeto Jira    ${gerente}[id]
     ${id}=    Set Variable    ${r.json()}[id]
-    ${projeto}=    Buscar Projeto    GerenteProjeto    ${id}
-    ${corpo}=    Create Dictionary    nome=Projeto Jira    responsavelId=${gerente}[id]
-    ...    dataInicio=${projeto}[dataInicio]    dataFim=${projeto}[dataFim]    orcamentoAprovado=${projeto}[orcamentoAprovado]
-    ...    categoriaEstrategica=Grow    prioridade=Media    jiraProjectKey=${JIRA_PROJETO}
-    PUT On Session    GerenteProjeto    /api/projetos/${id}    json=${corpo}    expected_status=200
+    Definir Chave Jira    ${id}    ${JIRA_PROJETO}
+    # Em andamento, para o projeto entrar nos indicadores de saúde (F12).
+    Alterar Status Do Projeto    GerenteProjeto    ${id}    Aprovar
+    Alterar Status Do Projeto    GerenteProjeto    ${id}    Iniciar
     Set Suite Variable    ${PROJETO_JIRA}    ${id}
+
+Definir Chave Jira
+    [Arguments]    ${id}    ${chave}
+    ${projeto}=    Buscar Projeto    GerenteProjeto    ${id}
+    ${corpo}=    Create Dictionary    nome=${projeto}[nome]    responsavelId=${projeto}[responsavelId]
+    ...    dataInicio=${projeto}[dataInicio]    dataFim=${projeto}[dataFim]    orcamentoAprovado=${projeto}[orcamentoAprovado]
+    ...    categoriaEstrategica=${projeto}[categoriaEstrategica]    prioridade=${projeto}[prioridade]    jiraProjectKey=${chave}
+    PUT On Session    GerenteProjeto    /api/projetos/${id}    json=${corpo}    expected_status=200
+
+Liberar Chave Jira De Execucoes Anteriores
+    [Documentation]    Cada issue do Jira pertence a um só projeto do Prumo: tira a chave dos projetos criados
+    ...    por execuções anteriores desta suíte.
+    ${portfolios}=    GET On Session    GerenteProjeto    /api/portfolios    expected_status=200
+    FOR    ${p}    IN    @{portfolios.json()}
+        IF    not $p['nome'].startswith('Portfolio Jira')    CONTINUE
+        ${projetos}=    GET On Session    GerenteProjeto    /api/portfolios/${p}[id]/projetos    expected_status=200
+        FOR    ${projeto}    IN    @{projetos.json()}
+            ${detalhe}=    Buscar Projeto    GerenteProjeto    ${projeto}[id]
+            IF    $detalhe.get('jiraProjectKey') == $JIRA_PROJETO and $detalhe['status'] not in ('Cancelado', 'Arquivado')
+                Definir Chave Jira    ${projeto}[id]    ${EMPTY}
+            END
+        END
+    END
 
 Encerrar Suite
     [Documentation]    Sem Jira real, deixa a integração falsa desativada para o agendador não tentar sincronizar.
+    ...    Com Jira real, solta a chave do projeto de testes para a próxima execução.
+    IF    $PROJETO_JIRA    Run Keyword And Ignore Error    Definir Chave Jira    ${PROJETO_JIRA}    ${EMPTY}
     IF    not $JIRA_URL
         ${corpo}=    Create Dictionary    url=${URL_JIRA}    email=${EMAIL_JIRA}    ativo=${False}
         PUT On Session    Desenvolvedor    /api/integracoes/jira    json=${corpo}    expected_status=any
@@ -202,10 +240,19 @@ Status Da Integracao Nao Deve Ser
     Should Not Be Equal    ${i.json()}[status]    ${status}
 
 Configurar Jira
-    [Arguments]    ${token}    ${intervalo}=60    ${ativo}=${False}
+    [Arguments]    ${token}    ${intervalo}=60    ${ativo}=${False}    ${status}=200
+    # O corpo leva o API token: nada deste trecho vai para o log.
+    ${nivel}=    Set Log Level    NONE
     ${corpo}=    Create Dictionary    url=${JIRA_URL}    email=${JIRA_EMAIL}    apiToken=${token}
     ...    intervaloSincronizacaoMinutos=${{ int($intervalo) }}    ativo=${ativo}
-    PUT On Session    Desenvolvedor    /api/integracoes/jira    json=${corpo}    expected_status=200
+    ${r}=    PUT On Session    Desenvolvedor    /api/integracoes/jira    json=${corpo}    expected_status=${status}
+    [Teardown]    Set Log Level    ${nivel}
+    RETURN    ${r}
+
+Indicadores Do Projeto Jira
+    ${r}=    GET On Session    Desenvolvedor    /api/projetos/${PROJETO_JIRA}/indicadores    expected_status=200
+    ...    params=de=2000-01-01
+    RETURN    ${r.json()}
 
 Sincronizar E Aguardar
     [Documentation]    POST /sincronizar (202) e espera um log novo terminar.
