@@ -1,0 +1,11 @@
+output.xml
+log.html
+report.html
+*.pyc
+__pycache__/
+.venv/
+.env
+browser/
+playwright-log.txt
+node_modules/
+geckodriver*.log

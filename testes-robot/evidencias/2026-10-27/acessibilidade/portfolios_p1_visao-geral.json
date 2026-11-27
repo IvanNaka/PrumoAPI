@@ -1,0 +1,30 @@
+{
+  "tela": "portfolios_p1_visao-geral",
+  "regrasAprovadas": 23,
+  "violacoes": [
+    {
+      "regra": "color-contrast",
+      "impacto": "serious",
+      "descricao": "Elements must meet minimum color contrast ratio thresholds",
+      "ajuda": "https://dequeuniversity.com/rules/axe/4.10/color-contrast?application=axeAPI",
+      "elementos": [
+        [
+          ".portfolio-ativo-label"
+        ]
+      ],
+      "quantidade": 1
+    },
+    {
+      "regra": "select-name",
+      "impacto": "critical",
+      "descricao": "Select element must have an accessible name",
+      "ajuda": "https://dequeuniversity.com/rules/axe/4.10/select-name?application=axeAPI",
+      "elementos": [
+        [
+          "select"
+        ]
+      ],
+      "quantidade": 1
+    }
+  ]
+}

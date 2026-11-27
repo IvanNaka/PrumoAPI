@@ -1,0 +1,94 @@
+name: Robot Framework
+
+on:
+  push:
+    paths: ["testes-robot/**", ".github/workflows/robot-testes.yml"]
+  pull_request:
+    paths: ["testes-robot/**", ".github/workflows/robot-testes.yml"]
+  workflow_dispatch:
+    inputs:
+      navegadores:
+        description: "Navegadores (seção 4.2), separados por vírgula"
+        default: "chrome,firefox,edge"
+      include:
+        description: "Tags a executar (ex.: smoke, calculo, persona:Diretoria). Vazio = todas"
+        default: ""
+
+defaults:
+  run:
+    working-directory: testes-robot
+
+jobs:
+  # Em todo push/PR: valida a sintaxe das suítes e keywords sem acessar a API nem o front.
+  dryrun:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: testes-robot/requirements.txt
+      - run: pip install -r requirements.txt
+      - run: robot --dryrun --output NONE --log NONE --report NONE tests
+      - name: Oráculo sem dependências da API
+        run: python -c "from datetime import date; from oraculo.calculos import Cenario; from oraculo import massa; Cenario(date.today(), date.today()).dashboard(massa.PORTFOLIO_1)"
+
+  # Manual (Actions → Robot Framework → Run workflow): execução contra o ambiente de homologação.
+  executar:
+    if: github.event_name == 'workflow_dispatch'
+    needs: dryrun
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 1   # as suítes escrevem no mesmo ambiente
+      matrix:
+        navegador: [chrome, firefox, edge]
+    env:
+      PRUMO_API_URL: ${{ vars.PRUMO_API_URL }}
+      PRUMO_FRONT_URL: ${{ vars.PRUMO_FRONT_URL }}
+      PRUMO_AUTH_TESTE_CHAVE: ${{ secrets.PRUMO_AUTH_TESTE_CHAVE }}
+      PRUMO_JWT_KEY: ${{ secrets.PRUMO_JWT_KEY }}
+      PRUMO_JIRA_URL: ${{ vars.PRUMO_JIRA_URL }}
+      PRUMO_JIRA_EMAIL: ${{ vars.PRUMO_JIRA_EMAIL }}
+      PRUMO_JIRA_PROJETO: ${{ vars.PRUMO_JIRA_PROJETO }}
+      PRUMO_JIRA_TOKEN: ${{ secrets.PRUMO_JIRA_TOKEN }}
+      BROWSER: ${{ matrix.navegador }}
+    steps:
+      - name: Navegador selecionado?
+        id: filtro
+        run: echo "rodar=${{ contains(github.event.inputs.navegadores, matrix.navegador) }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        if: steps.filtro.outputs.rodar == 'true'
+      - uses: actions/setup-python@v5
+        if: steps.filtro.outputs.rodar == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: testes-robot/requirements.txt
+      - uses: actions/setup-node@v4
+        if: steps.filtro.outputs.rodar == 'true'
+        with:
+          node-version: "22"
+      - name: Dependências
+        if: steps.filtro.outputs.rodar == 'true'
+        run: |
+          pip install -r requirements.txt
+          npm ci
+      - name: Executar testes
+        if: steps.filtro.outputs.rodar == 'true'
+        run: |
+          ARGS=""
+          if [ -n "${{ github.event.inputs.include }}" ]; then ARGS="--include ${{ github.event.inputs.include }}"; fi
+          robot -d results/${{ matrix.navegador }} --name "Prumo (${{ matrix.navegador }})" $ARGS tests
+      - name: Critérios de aceite (Tabela 21)
+        if: always() && steps.filtro.outputs.rodar == 'true'
+        run: |
+          python scripts/criterios_aceite.py results/${{ matrix.navegador }}/output.xml docs/inspecao_heuristica.csv
+          echo "## ${{ matrix.navegador }}" >> "$GITHUB_STEP_SUMMARY"
+          cat results/${{ matrix.navegador }}/criterios_aceite.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.filtro.outputs.rodar == 'true'
+        with:
+          name: evidencias-${{ matrix.navegador }}
+          path: testes-robot/results/${{ matrix.navegador }}/

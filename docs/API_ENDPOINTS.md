@@ -48,6 +48,14 @@ Autentica (ou cria) um usuário via ID Token do Google e retorna um JWT.
 
 > O JWT retornado inclui um claim de role por perfil do usuário. Um e-mail ainda não cadastrado é criado no primeiro login **sem perfil** (ou como `Desenvolvedor`, se o e-mail já for membro de alguma equipe). Usuário sem perfil só acessa `GET /api/auth/me` e as rotas de `/api/onboarding`; as demais respondem `403` com "Entre em uma equipe ou crie uma para acessar o Prumo.".
 
+### `POST /api/auth/teste` (somente no ambiente de testes)
+Login das contas simuladas usado pelos testes automatizados (Cap. 4, seção 4.9 b), já que o Google bloqueia login em navegadores automatizados.
+Emite o mesmo `{ token, expiraEm, usuario }` do login Google para um usuário **já cadastrado e ativo** (nunca cadastra).
+
+Só responde quando `AuthTeste:Habilitado=true`, o ambiente **não** é `Production` e o cabeçalho `X-Auth-Teste-Chave` é igual a `AuthTeste:Chave` (mínimo 16 caracteres). Em qualquer outro caso: **404**.
+
+**Body:** `{ "email": "po@prumo" }` · **403** se o e-mail não existe ou está inativo.
+
 ---
 
 ## Onboarding (primeiro acesso)

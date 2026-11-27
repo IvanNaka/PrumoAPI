@@ -1,0 +1,6 @@
+robotframework==7.5
+robotframework-requests==0.9.7
+robotframework-seleniumlibrary==6.9.0
+selenium==4.51.0
+PyJWT==2.15.0
+openpyxl==3.1.5

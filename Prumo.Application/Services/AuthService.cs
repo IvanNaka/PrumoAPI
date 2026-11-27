@@ -65,6 +65,19 @@ namespace Prumo.Application.Services
             return IssueSession(user);
         }
 
+        public async Task<LoginResponseDto> LoginTesteAsync(string email)
+        {
+            var normalizado = (email ?? string.Empty).Trim().ToLowerInvariant();
+            var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Email == normalizado);
+            if (user is null || !user.IsActive)
+            {
+                // Diferente do login Google, o login de teste nunca cadastra usuários.
+                throw new BusinessRuleException(403, Messages.RN03_SemPermissao);
+            }
+
+            return IssueSession(user);
+        }
+
         public async Task<LoginResponseDto> RefreshSessionAsync(Guid userId)
         {
             var user = await _db.Users.Include(u => u.Roles).SingleOrDefaultAsync(u => u.Id == userId);
