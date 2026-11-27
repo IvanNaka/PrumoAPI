@@ -174,9 +174,10 @@ BEGIN
 
     -- ---------------------------------------------------------------- orçamento (Burn Rate)
     -- Um lançamento por mês desde o início. O "Atendimento com IA" estoura o orçamento.
+    -- O Painel de BI (Planejado) não tem custo lançado: VPL realizado = 0.
     FOR r IN SELECT * FROM (VALUES
         (p_app, 5, 52000), (p_openfin, 4, 38000), (p_ia, 3, 68000), (p_nuvem, 8, 41000),
-        (p_erp, 6, 22000), (p_lgpd, 3, 15000), (p_bi, 1, 4000)) AS b(pid, meses, valor)
+        (p_erp, 6, 22000), (p_lgpd, 3, 15000)) AS b(pid, meses, valor)
     LOOP
         FOR m IN 1..r.meses LOOP
             INSERT INTO "BudgetExpenses" ("Id","ProjectId","Amount","Category","Description","Date","Active","CreatedDate")
