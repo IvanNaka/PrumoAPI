@@ -7,10 +7,10 @@
 -- além das 2 equipes e dos 3 OKRs do mock.
 -- Não toca em usuários, perfis, integrações nem em outros portfólios.
 --
--- Uso:  psql "<connection string>" -v ON_ERROR_STOP=1 -f remover_mock_demo.sql
+-- Uso: cole no SQL Editor do Supabase e clique em Run, ou:
+--       psql "<connection string>" -v ON_ERROR_STOP=1 -f remover_mock_demo.sql
 -- Pode rodar mais de uma vez (se não houver mock, não faz nada).
 -- =============================================================================
-\set ON_ERROR_STOP on
 BEGIN;
 
 CREATE TEMP TABLE demo_portfolio ON COMMIT DROP AS

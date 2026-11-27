@@ -5,7 +5,8 @@
 -- score/ranking já calculados, OKRs, orçamento, business cases, dependências,
 -- 2 equipes e issues/worklogs para o dashboard e a capacidade.
 --
--- Uso:   psql "<connection string>" -v ON_ERROR_STOP=1 -f criar_mock_demo.sql
+-- Uso: cole no SQL Editor do Supabase e clique em Run, ou:
+--        psql "<connection string>" -v ON_ERROR_STOP=1 -f criar_mock_demo.sql
 -- Desfazer:  psql "<connection string>" -v ON_ERROR_STOP=1 -f remover_mock_demo.sql
 --
 -- Tudo roda em uma única transação: se algo falhar, nada é gravado.
@@ -13,7 +14,6 @@
 -- Rode no dia da apresentação: a capacidade das equipes é calculada no mês
 -- corrente, e os worklogs são lançados no mês em que o script roda.
 -- =============================================================================
-\set ON_ERROR_STOP on
 BEGIN;
 
 DO $$
