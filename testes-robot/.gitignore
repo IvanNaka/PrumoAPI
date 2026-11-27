@@ -10,3 +10,7 @@ playwright-log.txt
 node_modules/
 geckodriver*.log
 results/
+# Evidências da validação ficam versionadas.
+!evidencias/**/output.xml
+!evidencias/**/log.html
+!evidencias/**/report.html
