@@ -1,4 +1,0 @@
-﻿data;medicao;navegador;segundos;limite;resultado
-2026-11-27T03:50:01+00:00;Carregamento do dashboard (média de 3);chrome;0,291;3,0;OK
-2026-11-27T03:50:01+00:00;GET /dashboard (API);;0,018;3,0;OK
-2026-11-27T03:50:02+00:00;POST /priorizacao (10 projetos);;0,014;;OK
