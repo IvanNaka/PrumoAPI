@@ -54,8 +54,8 @@ BEGIN
     IF EXISTS (SELECT 1 FROM "Portfolios" WHERE "Id" = v_portfolio) THEN
         RAISE EXCEPTION 'O mock da demo já existe. Rode remover_mock_demo.sql antes de criar de novo.';
     END IF;
-    IF EXISTS (SELECT 1 FROM "Teams" WHERE "Name" IN ('Squad Canais Digitais', 'Squad Plataforma')
-                                       OR "InviteCode" IN ('DEMOCAN7', 'DEMOPLT7')) THEN
+    IF EXISTS (SELECT 1 FROM "Teams" WHERE "Name" IN ('Squad Experiência Digital', 'Squad Core & Dados')
+                                       OR "InviteCode" IN ('DMOX7K2Q', 'DMOP4W9R')) THEN
         RAISE EXCEPTION 'Já existe uma equipe com o nome ou código de convite usado pelo mock.';
     END IF;
 
@@ -215,8 +215,8 @@ BEGIN
 
     -- ---------------------------------------------------------------- equipes (capacidade)
     INSERT INTO "Teams" ("Id","Name","InviteCode","PortfolioId","OwnerUserId","Active","CreatedDate") VALUES
-      (t_canais, 'Squad Canais Digitais', 'DEMOCAN7', v_portfolio, u_tl, true, agora),
-      (t_plat,   'Squad Plataforma',      'DEMOPLT7', v_portfolio, u_tl, true, agora);
+      (t_canais, 'Squad Experiência Digital', 'DMOX7K2Q', v_portfolio, u_tl, true, agora),
+      (t_plat,   'Squad Core & Dados',      'DMOP4W9R', v_portfolio, u_tl, true, agora);
     INSERT INTO "TeamUsers" ("Id","TeamId","Name","Email","HourlyCost","MonthlyCapacityHours","UserId","Active","CreatedDate") VALUES
       (gen_random_uuid(), t_canais, 'Marina Alves',   'marina.alves@prumo.demo',   135, 160, NULL, true, agora),
       (gen_random_uuid(), t_canais, 'Rafael Costa',   'rafael.costa@prumo.demo',   120, 160, NULL, true, agora),
@@ -227,8 +227,8 @@ BEGIN
 
     -- ---------------------------------------------------------------- issues e worklogs (dados "do Jira")
     -- Mesmo padrão do SeedValidacao: 5 concluídas + 3 abertas por projeto.
-    -- Ocupação (demanda aberta / capacidade): Squad Canais Digitais ≈ 130% (sobrecarregada),
-    -- Squad Plataforma ≈ 80% (adequada);
+    -- Ocupação (demanda aberta / capacidade): Squad Experiência Digital ≈ 130% (sobrecarregada),
+    -- Squad Core & Dados ≈ 80% (adequada);
     -- o "Atendimento com IA" tem as abertas atrasadas.
     FOR r IN SELECT * FROM (VALUES
         (p_app,     'SAPP', 'canais', 80, false),
